@@ -1,0 +1,13 @@
+{
+  "name": "ep-time-tracking-prototype",
+  "version": "1.0.0",
+  "description": "Enduring Planet Central - Time Tracking, Analytics & Reports Prototype",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve .",
+    "dev": "npx serve ."
+  },
+  "keywords": ["enduring-planet", "time-tracking", "tms", "clockify-alternative"],
+  "author": "Enduring Planet",
+  "license": "UNLICENSED"
+}
