@@ -1155,70 +1155,237 @@
       </section>
 
       <!-- ===================================================================== -->
-      <!-- VIEW 3: EP CENTRAL TASK BOARD (With EPA-1881 Modal)                   -->
+      <!-- VIEW 3: EP CENTRAL TASK BOARD (Exact EP Central Board + Task Modal)   -->
       <!-- ===================================================================== -->
-      <section id="view-task-board" class="view-panel hidden flex-1 flex flex-col bg-slate-100">
+      <section id="view-task-board" class="view-panel hidden flex-1 flex flex-col bg-white overflow-y-auto">
         
-        <div class="bg-white border-b border-slate-200 px-6 py-4 flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <div class="text-xs text-slate-500 font-medium">Tasks / <span class="text-slate-800 font-semibold">Task Board</span></div>
-            <h1 class="text-xl font-bold text-slate-900 mt-0.5">Tasks Board</h1>
+        <!-- Top Header & Filter Controls (Matches EP Central Task Board) -->
+        <div class="px-6 pt-4 pb-3 border-b border-slate-200 space-y-3.5">
+          
+          <!-- Breadcrumb -->
+          <div class="text-xs text-slate-500">tasks / <span class="text-slate-800 font-medium">board</span></div>
+
+          <!-- Title + Product Dropdown -->
+          <div class="flex items-center justify-between">
+            <h1 class="text-2xl font-extrabold text-[#0F172A] tracking-tight">Tasks</h1>
+            <div class="relative">
+              <select class="appearance-none bg-white border border-slate-300 rounded-md pl-3.5 pr-8 py-1.5 text-xs font-semibold text-slate-800 shadow-xs focus:outline-none">
+                <option selected>Accounting</option>
+                <option>Accounting &amp; Bookkeeping</option>
+                <option>FP&amp;A</option>
+              </select>
+              <span class="pointer-events-none absolute right-2.5 top-2 text-slate-500 text-[10px]">▾</span>
+            </div>
           </div>
 
-          <div class="flex flex-wrap items-center gap-2.5">
-            <select class="text-xs bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 font-medium text-slate-700">
-              <option selected>Product: Accounting</option>
-              <option>Product: FP&A</option>
-            </select>
-            <button onclick="openTaskModal('EPA-1881')" class="text-xs bg-[#00D59B] hover:bg-[#00B98C] text-slate-900 font-bold px-3 py-1.5 rounded-lg shadow-sm transition">
-              + Open Task EPA-1881 (Add/Edit Time)
+          <!-- List / Board Switcher + Search + New Task -->
+          <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+            <div class="inline-flex rounded-md border border-slate-200 bg-slate-100 p-0.5 text-xs">
+              <button class="px-3 py-1 rounded text-slate-500 font-medium flex items-center space-x-1.5">
+                <span>≡</span><span>List</span>
+              </button>
+              <button class="px-3 py-1 rounded bg-white text-slate-900 font-bold shadow-2xs flex items-center space-x-1.5">
+                <span class="text-[10px] bg-slate-800 text-white px-1 rounded-xs">⊞</span><span>Board</span>
+              </button>
+            </div>
+
+            <div class="flex items-center space-x-2.5">
+              <input type="text" placeholder="Search tasks..." class="border border-slate-200 rounded-md px-3 py-1.5 text-xs w-52 focus:outline-none focus:border-emerald-600">
+              <button onclick="openTaskModal('EPA-1881')" class="bg-[#2D9F78] hover:bg-[#258564] text-white text-xs font-semibold px-3.5 py-1.5 rounded-md shadow-xs transition flex items-center space-x-1.5">
+                <span>+</span><span>New Task</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Filter Row -->
+          <div class="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+            <div class="flex flex-wrap items-center gap-2">
+              <select class="bg-white border border-slate-200 rounded-md px-3 py-1.5 text-xs text-slate-400 w-36">
+                <option>Assignee</option>
+                <option>wania.siraj@enduringplanet.com</option>
+                <option>daim@enduringplanet.com</option>
+              </select>
+
+              <select class="bg-white border border-slate-200 rounded-md px-3 py-1.5 text-xs text-slate-700 font-medium w-32">
+                <option selected>Accounting</option>
+                <option>FP&amp;A</option>
+              </select>
+
+              <div class="relative">
+                <span class="absolute -top-2 left-2 bg-white px-1 text-[9px] text-slate-500">Start Date</span>
+                <input type="text" value="dd/mm/yyyy" readonly class="bg-white border border-slate-200 rounded-md px-2.5 py-1.5 text-xs text-slate-700 w-28">
+              </div>
+
+              <div class="relative">
+                <span class="absolute -top-2 left-2 bg-white px-1 text-[9px] text-slate-500">End Date</span>
+                <input type="text" value="dd/mm/yyyy" readonly class="bg-white border border-slate-200 rounded-md px-2.5 py-1.5 text-xs text-slate-700 w-28">
+              </div>
+
+              <select class="bg-white border border-slate-200 rounded-md px-3 py-1.5 text-xs text-slate-800 font-semibold w-32">
+                <option selected>Statuses: All</option>
+                <option>Monthly</option>
+                <option>Open Task</option>
+              </select>
+
+              <select class="bg-white border border-slate-200 rounded-md px-3 py-1.5 text-xs text-slate-400 w-28">
+                <option>Tags</option>
+              </select>
+
+              <button class="border border-slate-200 rounded-md px-2.5 py-1.5 text-xs text-slate-600 hover:bg-slate-50">+</button>
+
+              <button class="border border-rose-300 text-rose-600 hover:bg-rose-50 rounded-md px-2.5 py-1.5 text-xs font-medium flex items-center space-x-1">
+                <span>✕</span><span>Clear Filters</span>
+              </button>
+            </div>
+
+            <div class="flex items-center space-x-1.5">
+              <button class="border border-slate-200 rounded p-1.5 text-slate-600 hover:bg-slate-50 text-xs" title="Columns">▥</button>
+              <button class="border border-slate-200 rounded p-1.5 text-slate-600 hover:bg-slate-50 text-xs" title="Settings">⚙</button>
+              <button class="border border-slate-200 rounded p-1.5 text-slate-600 hover:bg-slate-50 text-xs" title="More">⌄</button>
+            </div>
+          </div>
+
+          <div class="flex justify-end">
+            <button class="text-[11px] text-slate-500 hover:text-slate-700 flex items-center space-x-1">
+              <span>⤡</span><span>Collapse all columns</span>
             </button>
           </div>
         </div>
 
-        <!-- Kanban Columns -->
-        <div class="flex-1 p-6 overflow-x-auto flex space-x-4 items-start">
+        <!-- Kanban Columns Area (Exact EP Central Columns) -->
+        <div class="flex-1 p-5 overflow-x-auto flex space-x-4 items-stretch bg-white">
           
-          <!-- Open Task -->
-          <div class="w-72 shrink-0 bg-slate-200/70 rounded-xl p-3">
-            <div class="text-xs font-bold text-slate-700 uppercase mb-3 px-1">Open Task (0)</div>
-            <div class="p-6 text-center text-xs text-slate-400 border-2 border-dashed border-slate-300 rounded-lg">No open tasks</div>
+          <!-- Column 1: Open Task -->
+          <div class="w-64 shrink-0 bg-[#F4F6F8] rounded-lg p-3 flex flex-col">
+            <div class="flex items-center justify-between mb-3 px-1">
+              <div class="flex items-center space-x-1.5">
+                <span class="text-slate-400 text-xs">^</span>
+                <span class="text-xs font-bold text-slate-800">Open Task</span>
+                <span class="w-4 h-4 rounded-full bg-slate-500 text-white text-[10px] font-bold flex items-center justify-center">0</span>
+              </div>
+              <span class="text-slate-400 text-xs">⋮⋮</span>
+            </div>
+            <div class="flex-1 border border-dashed border-slate-300 rounded-lg bg-[#EEF1F5]/60 flex items-center justify-center min-h-[420px]">
+              <span class="text-[10px] font-semibold text-slate-400 tracking-wider uppercase">DROP TASK HERE</span>
+            </div>
           </div>
 
-          <!-- Monthly (2) -->
-          <div class="w-80 shrink-0 bg-slate-200/80 rounded-xl p-3 space-y-3">
+          <!-- Column 2: Monthly (2) -->
+          <div class="w-64 shrink-0 bg-[#F4F6F8] rounded-lg p-3 flex flex-col space-y-3">
             <div class="flex items-center justify-between px-1">
-              <span class="text-xs font-bold text-slate-800 uppercase">Monthly (2)</span>
+              <div class="flex items-center space-x-1.5">
+                <span class="text-slate-400 text-xs">^</span>
+                <span class="text-xs font-bold text-slate-800">Monthly</span>
+                <span class="w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center">2</span>
+              </div>
+              <span class="text-slate-400 text-xs">⋮⋮</span>
             </div>
 
-            <!-- Card EPA-1881 -->
-            <div onclick="openTaskModal('EPA-1881')" class="bg-white border-2 border-emerald-500 rounded-xl p-4 shadow-sm hover:shadow-md cursor-pointer transition space-y-3">
-              <div class="flex items-center justify-between text-xs">
-                <span class="font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">EPA-1881</span>
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700">High Priority</span>
+            <!-- Card 1: Moby Filter - Task Tracker - October 2026 (EPA-1881) -->
+            <div onclick="openTaskModal('EPA-1881')" class="bg-white border border-slate-200 hover:border-emerald-500 rounded-lg p-3.5 shadow-2xs hover:shadow-md cursor-pointer transition space-y-2.5">
+              <div class="text-[11px] font-bold text-[#2D9F78]">Moby Filters Inc</div>
+              <h3 class="text-xs font-bold text-slate-900 leading-snug">Moby Filter - Task Tracker - October 2026</h3>
+              <div>
+                <span class="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-purple-100 text-purple-700">RECURRING</span>
               </div>
-              <h3 class="text-sm font-bold text-slate-900">Moby Filter - Task Tracker - October 2026</h3>
-              <p class="text-xs text-slate-500">Click to open Activity > Time tab, choose Project, start timer, or edit logged time.</p>
-              <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-                <span class="font-medium text-slate-600">Moby Filters Inc</span>
-                <span class="font-mono font-bold text-emerald-700" id="board-card-logged-hours">18h 45m</span>
+              <div class="space-y-1 text-[11px] text-slate-500">
+                <div class="flex items-center space-x-1.5">
+                  <span>📅</span><span>S: Oct 15, 2026</span>
+                </div>
+                <div class="flex items-center space-x-1.5">
+                  <span>📅</span><span>Nov 15, 2026</span>
+                </div>
+              </div>
+              <div class="flex items-center justify-between pt-1 text-[11px]">
+                <div class="flex items-center space-x-2">
+                  <span class="text-slate-500 font-medium">🔗 0/7</span>
+                  <span class="text-rose-600 font-bold flex items-center space-x-0.5"><span>⚠️</span><span>High</span></span>
+                </div>
+                <div class="flex items-center space-x-1">
+                  <span class="text-slate-500 text-[10px]">👥 3</span>
+                  <span class="w-5 h-5 rounded-full bg-slate-300 text-slate-700 font-bold text-[9px] flex items-center justify-center">WA</span>
+                </div>
+              </div>
+              <div class="pt-1 flex items-center justify-between">
+                <span class="px-2 py-0.5 rounded bg-blue-50 text-blue-600 font-semibold text-[10px]">Monthly</span>
+                <span class="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded" id="board-card-logged-hours">7h 15m</span>
               </div>
             </div>
 
-            <!-- Card EPA-1845 -->
-            <div onclick="openTaskModal('EPA-1881')" class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm cursor-pointer space-y-2">
-              <div class="flex items-center justify-between text-xs">
-                <span class="font-mono text-slate-500">EPA-1845</span>
-                <span class="px-2 py-0.5 rounded-full text-[10px] bg-slate-100 text-slate-600">September</span>
+            <!-- Card 2: Moby Filter - Task Tracker - September 2026 -->
+            <div onclick="openTaskModal('EPA-1881')" class="bg-white border border-slate-200 hover:border-emerald-500 rounded-lg p-3.5 shadow-2xs hover:shadow-md cursor-pointer transition space-y-2.5">
+              <div class="text-[11px] font-bold text-[#2D9F78]">Moby Filters Inc</div>
+              <h3 class="text-xs font-bold text-slate-900 leading-snug">Moby Filter - Task Tracker - September 2026</h3>
+              <div>
+                <span class="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-purple-100 text-purple-700">RECURRING</span>
               </div>
-              <h3 class="text-sm font-semibold text-slate-700">Moby Filter - Task Tracker - September 2026</h3>
+              <div class="space-y-1 text-[11px] text-slate-500">
+                <div class="flex items-center space-x-1.5">
+                  <span>📅</span><span>S: Sep 10, 2026</span>
+                </div>
+                <div class="flex items-center space-x-1.5 text-rose-600 font-medium">
+                  <span>📅</span><span>Oct 15, 2026</span>
+                </div>
+              </div>
+              <div class="flex items-center justify-between pt-1 text-[11px]">
+                <div class="flex items-center space-x-2">
+                  <span class="text-slate-500 font-medium">🔗 5/7</span>
+                  <span class="text-rose-600 font-bold flex items-center space-x-0.5"><span>⚠️</span><span>High</span></span>
+                </div>
+                <div class="flex items-center space-x-1">
+                  <span class="text-slate-500 text-[10px]">👥 2</span>
+                  <span class="w-5 h-5 rounded-full bg-slate-300 text-slate-700 font-bold text-[9px] flex items-center justify-center">WA</span>
+                </div>
+              </div>
+              <div class="pt-1">
+                <span class="px-2 py-0.5 rounded bg-blue-50 text-blue-600 font-semibold text-[10px]">Monthly</span>
+              </div>
             </div>
           </div>
 
-          <!-- Weekly -->
-          <div class="w-72 shrink-0 bg-slate-200/70 rounded-xl p-3">
-            <div class="text-xs font-bold text-slate-700 uppercase mb-3 px-1">Weekly (0)</div>
-            <div class="p-6 text-center text-xs text-slate-400 border-2 border-dashed border-slate-300 rounded-lg">No weekly tasks</div>
+          <!-- Column 3: Weekly (0) -->
+          <div class="w-64 shrink-0 bg-[#F4F6F8] rounded-lg p-3 flex flex-col">
+            <div class="flex items-center justify-between mb-3 px-1">
+              <div class="flex items-center space-x-1.5">
+                <span class="text-slate-400 text-xs">^</span>
+                <span class="text-xs font-bold text-slate-800">Weekly</span>
+                <span class="w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center">0</span>
+              </div>
+              <span class="text-slate-400 text-xs">⋮⋮</span>
+            </div>
+            <div class="flex-1 border border-dashed border-slate-300 rounded-lg bg-[#EEF1F5]/60 flex items-center justify-center min-h-[420px]">
+              <span class="text-[10px] font-semibold text-slate-400 tracking-wider uppercase">DROP TASK HERE</span>
+            </div>
+          </div>
+
+          <!-- Column 4: Under Review - Team Lead (0) -->
+          <div class="w-64 shrink-0 bg-[#F4F6F8] rounded-lg p-3 flex flex-col">
+            <div class="flex items-center justify-between mb-3 px-1">
+              <div class="flex items-center space-x-1.5">
+                <span class="text-slate-400 text-xs">^</span>
+                <span class="text-xs font-bold text-slate-800">Under Review - Team Lead</span>
+                <span class="w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center">0</span>
+              </div>
+              <span class="text-slate-400 text-xs">⋮⋮</span>
+            </div>
+            <div class="flex-1 border border-dashed border-slate-300 rounded-lg bg-[#EEF1F5]/60 flex items-center justify-center min-h-[420px]">
+              <span class="text-[10px] font-semibold text-slate-400 tracking-wider uppercase">DROP TASK HERE</span>
+            </div>
+          </div>
+
+          <!-- Column 5: Under Review - Client (0) -->
+          <div class="w-64 shrink-0 bg-[#F4F6F8] rounded-lg p-3 flex flex-col">
+            <div class="flex items-center justify-between mb-3 px-1">
+              <div class="flex items-center space-x-1.5">
+                <span class="text-slate-400 text-xs">^</span>
+                <span class="text-xs font-bold text-slate-800">Under Review - Client</span>
+                <span class="w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center">0</span>
+              </div>
+              <span class="text-slate-400 text-xs">⋮⋮</span>
+            </div>
+            <div class="flex-1 border border-dashed border-slate-300 rounded-lg bg-[#EEF1F5]/60 flex items-center justify-center min-h-[420px]">
+              <span class="text-[10px] font-semibold text-slate-400 tracking-wider uppercase">DROP TASK HERE</span>
+            </div>
           </div>
 
         </div>
@@ -1231,10 +1398,10 @@
         <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
           <div>
             <div class="text-xs text-slate-500 font-medium">Clockify / <span class="text-slate-800 font-semibold">Dashboard</span></div>
-            <h1 class="text-2xl font-bold text-slate-900">Executive Time & Product Analytics</h1>
+            <h1 class="text-2xl font-bold text-slate-900">Executive Time &amp; Product Analytics</h1>
           </div>
           <button onclick="navigateTo('clockify-reports')" class="px-4 py-2 text-xs font-bold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 shadow-sm">
-            Open Reports & Export →
+            Open Reports &amp; Export →
           </button>
         </div>
 
@@ -1248,7 +1415,7 @@
             <div class="text-2xl font-extrabold text-emerald-600 mt-1 font-mono">482:30:00</div>
           </div>
           <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-            <div class="text-xs text-slate-500 font-semibold uppercase">FP&A Product</div>
+            <div class="text-xs text-slate-500 font-semibold uppercase">FP&amp;A Product</div>
             <div class="text-2xl font-extrabold text-blue-600 mt-1 font-mono">212:44:50</div>
           </div>
           <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
@@ -1259,13 +1426,13 @@
       </section>
 
       <!-- ===================================================================== -->
-      <!-- VIEW 5: CLOCKIFY PROJECTS                                             -->
+      <!-- VIEW 5: CLOCKIFY PROJECTS (Many-to-Many Companies <-> Projects)       -->
       <!-- ===================================================================== -->
       <section id="view-clockify-projects" class="view-panel hidden flex-1 p-6 space-y-6 max-w-[1600px] mx-auto w-full bg-slate-50">
         <div class="flex items-center justify-between border-b border-slate-200 pb-4">
           <div>
             <h1 class="text-xl font-bold text-slate-900">Mapped Projects Directory</h1>
-            <p class="text-xs text-slate-500">All projects linked to EP Companies and Products (Accounting / FP&A)</p>
+            <p class="text-xs text-slate-500">Each Project belongs to a Product (Accounting or FP&amp;A) and can be assigned across multiple EP Companies</p>
           </div>
           <button onclick="prompt('New Project Name:')" class="px-3.5 py-2 text-xs font-bold bg-emerald-600 text-white rounded-lg">+ Create Project</button>
         </div>
@@ -1275,28 +1442,55 @@
             <thead class="bg-slate-50 text-slate-500 uppercase border-b border-slate-200">
               <tr>
                 <th class="py-3 px-4">Project Name</th>
-                <th class="py-3 px-4">EP Company (Client)</th>
-                <th class="py-3 px-4">Product</th>
+                <th class="py-3 px-4">Linked Product</th>
+                <th class="py-3 px-4">Assigned EP Companies (Many-to-Many)</th>
                 <th class="py-3 px-4 text-right">Logged Time</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 font-medium">
               <tr>
                 <td class="py-3 px-4 font-bold text-slate-900">Understanding system/Correcting EP mistake</td>
-                <td class="py-3 px-4">Cambium LLC</td>
                 <td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">Accounting</span></td>
+                <td class="py-3 px-4">
+                  <div class="flex flex-wrap gap-1.5">
+                    <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px]">Cambium LLC</span>
+                    <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px]">Moby Filters Inc</span>
+                  </div>
+                </td>
                 <td class="py-3 px-4 text-right font-mono font-bold">26:40:00</td>
               </tr>
               <tr>
                 <td class="py-3 px-4 font-bold text-slate-900">Monthly Close</td>
-                <td class="py-3 px-4">Moby Filters Inc</td>
                 <td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">Accounting</span></td>
+                <td class="py-3 px-4">
+                  <div class="flex flex-wrap gap-1.5">
+                    <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px]">Moby Filters Inc</span>
+                    <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px]">Cambium LLC</span>
+                    <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px]">Elephant Energy</span>
+                  </div>
+                </td>
                 <td class="py-3 px-4 text-right font-mono font-bold">14:30:00</td>
               </tr>
               <tr>
+                <td class="py-3 px-4 font-bold text-slate-900">Ad-hoc Financial Advisory</td>
+                <td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-bold">FP&amp;A</span></td>
+                <td class="py-3 px-4">
+                  <div class="flex flex-wrap gap-1.5">
+                    <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px]">Moby Filters Inc</span>
+                    <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px]">Dollaride Inc</span>
+                  </div>
+                </td>
+                <td class="py-3 px-4 text-right font-mono font-bold">04:15:00</td>
+              </tr>
+              <tr>
                 <td class="py-3 px-4 font-bold text-slate-900">Modelling and Proforma</td>
-                <td class="py-3 px-4">Dollaride Inc</td>
-                <td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-bold">FP&A</span></td>
+                <td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-bold">FP&amp;A</span></td>
+                <td class="py-3 px-4">
+                  <div class="flex flex-wrap gap-1.5">
+                    <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px]">Dollaride Inc</span>
+                    <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px]">Moby Filters Inc</span>
+                  </div>
+                </td>
                 <td class="py-3 px-4 text-right font-mono font-bold">14:20:00</td>
               </tr>
             </tbody>
@@ -1308,100 +1502,429 @@
   </div>
 
   <!-- ========================================================================= -->
-  <!-- 3. TASK MODAL EPA-1881 (Activity > Time: Choose Project, Add & Edit Time) -->
+  <!-- 3. EP CENTRAL TASK MODAL (Exact EP Central UI + New Time Tracking Tab)    -->
   <!-- ========================================================================= -->
-  <div id="task-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
+  <div id="task-modal" class="fixed inset-0 bg-slate-900/50 z-50 hidden flex items-center justify-center p-2 sm:p-6 overflow-y-auto">
+    <div class="bg-white rounded-xl shadow-2xl max-w-[1060px] w-full max-h-[92vh] flex flex-col overflow-hidden border border-slate-200">
       
-      <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-        <div class="flex items-center space-x-3">
-          <span class="text-xs font-mono font-bold text-slate-500">EPA-1881</span>
-          <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">Monthly</span>
+      <!-- Modal Top Header Bar (Matches EP Central: EPA-1881 + Copy on left, Pin + X on right) -->
+      <div class="px-5 py-3 bg-white border-b border-slate-200 flex items-center justify-between shrink-0">
+        <div class="flex items-center space-x-2">
+          <span class="text-xs font-bold text-slate-600">EPA-1881</span>
+          <button onclick="navigator.clipboard?.writeText('EPA-1881')" class="text-slate-400 hover:text-slate-600 text-xs" title="Copy Task Key">❐</button>
         </div>
-        <button onclick="closeTaskModal()" class="text-slate-400 hover:text-slate-700 p-1">✕</button>
+        <div class="flex items-center space-x-3">
+          <button class="text-slate-400 hover:text-slate-600 text-xs" title="Pin Task">📌</button>
+          <button onclick="closeTaskModal()" class="text-slate-500 hover:text-slate-800 text-sm font-medium leading-none">✕</button>
+        </div>
       </div>
 
-      <div class="flex-1 overflow-y-auto custom-scroll p-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <!-- Modal Split Body (Left Main Content + Right Details Sidebar) -->
+      <div class="flex-1 overflow-y-auto custom-scroll grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-slate-200">
         
-        <div class="lg:col-span-8 space-y-6">
-          <h1 class="text-xl font-extrabold text-slate-900">Moby Filter - Task Tracker - October 2026</h1>
+        <!-- LEFT COLUMN (8 cols): Title, Description, Subtasks, Activity > Time -->
+        <div class="lg:col-span-8 p-6 space-y-6 overflow-y-auto">
+          
+          <!-- Task Title -->
+          <h1 class="text-xl font-bold text-slate-900">Moby Filter - Task Tracker - October 2026</h1>
 
-          <div class="space-y-4 pt-2 border-t border-slate-200">
-            <div class="flex items-center justify-between border-b border-slate-200">
-              <h2 class="text-sm font-bold text-slate-900">Activity</h2>
-              <nav class="flex space-x-6 text-xs font-semibold">
-                <button class="py-2.5 border-b-2 border-emerald-600 text-emerald-700">Time</button>
-                <button class="py-2.5 text-slate-400">Comments</button>
-                <button class="py-2.5 text-slate-400">Email</button>
-                <button class="py-2.5 text-slate-400">Attachments</button>
-                <button class="py-2.5 text-slate-400">History</button>
-              </nav>
+          <!-- Description Section (Rich Text Toolbar + Box + Character Count) -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-800">Description</label>
+            <div class="border border-slate-200 rounded-md overflow-hidden">
+              <!-- Formatting Toolbar -->
+              <div class="bg-white border-b border-slate-200 px-3 py-1.5 flex items-center space-x-4 text-xs text-slate-500">
+                <button type="button" class="font-bold hover:text-slate-800">B</button>
+                <button type="button" class="italic hover:text-slate-800">I</button>
+                <button type="button" class="underline hover:text-slate-800">U</button>
+                <button type="button" class="hover:text-slate-800">•≡</button>
+                <button type="button" class="hover:text-slate-800">1≡</button>
+                <button type="button" class="hover:text-slate-800">🔗</button>
+              </div>
+              <!-- Editor Content -->
+              <textarea rows="3" class="w-full bg-[#F8FAFC] p-3 text-xs text-slate-700 focus:outline-none resize-none">Monthly accounting close, bank &amp; credit card reconciliations, payroll working entries, and management reporting for Moby Filters Inc.</textarea>
+            </div>
+            <div class="text-[11px] text-slate-400 text-right">134/32767 characters</div>
+          </div>
+
+          <!-- Subtasks Section (Matches EP Central Subtasks Table + Progress Bar) -->
+          <div class="space-y-2.5">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <h2 class="text-xs font-bold text-slate-800">Subtasks</h2>
+                <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600">0/6</span>
+              </div>
+              <button type="button" class="text-slate-500 hover:text-slate-800 text-sm font-bold leading-none">+</button>
             </div>
 
-            <!-- Log Time Box -->
-            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-4">
-              <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Select Project <span class="text-rose-500">*</span></label>
-                <select id="modal-project-select" class="w-full text-xs font-semibold bg-white border border-slate-300 rounded-lg p-2.5">
-                  <option value="Moby Filters - Monthly Close (Accounting)" selected>Moby Filters - Monthly Close (Accounting)</option>
-                  <option value="Moby Filters - Ad-hoc Financial Advisory (FP&A)">Moby Filters - Ad-hoc Financial Advisory (FP&A)</option>
-                  <option value="Cambium - Understanding system/Correcting EP mistake">Cambium - Understanding system/Correcting EP mistake</option>
+            <!-- Progress Bar -->
+            <div class="flex items-center space-x-3">
+              <div class="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                <div class="w-0 h-full bg-emerald-500"></div>
+              </div>
+              <span class="text-[11px] font-semibold text-slate-500 shrink-0">0% Done</span>
+            </div>
+
+            <!-- Subtasks Table -->
+            <div class="border border-slate-200 rounded-lg overflow-hidden">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-[#F8FAFC] border-b border-slate-200 text-slate-600 font-semibold text-[11px]">
+                  <tr>
+                    <th class="py-2 px-3">Title</th>
+                    <th class="py-2 px-2">Assignee</th>
+                    <th class="py-2 px-2">Due Date</th>
+                    <th class="py-2 px-2">Priority</th>
+                    <th class="py-2 px-2">Status</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-[11px]">
+                  <!-- Subtask 1 -->
+                  <tr class="hover:bg-slate-50">
+                    <td class="py-2 px-3">
+                      <div class="flex items-center space-x-1.5">
+                        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">TASK</span>
+                        <span class="font-bold text-blue-600">EPA-1885</span>
+                        <span class="text-slate-800 font-medium truncate max-w-[180px]">Uncategorised Sheet - October 2...</span>
+                      </div>
+                    </td>
+                    <td class="py-2 px-2">
+                      <div class="flex items-center space-x-1.5">
+                        <span class="w-5 h-5 rounded-full bg-[#34A87A] text-white text-[9px] font-bold flex items-center justify-center shrink-0">WA</span>
+                        <span class="text-slate-600 truncate max-w-[70px]">wania.siraj...</span>
+                      </div>
+                    </td>
+                    <td class="py-2 px-2 text-slate-600">Nov 15</td>
+                    <td class="py-2 px-2"><span class="px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 font-semibold text-[10px]">High</span></td>
+                    <td class="py-2 px-2"><span class="px-2 py-0.5 rounded border border-slate-200 bg-white text-slate-700 text-[10px] font-medium">• Open Task ▾</span></td>
+                  </tr>
+                  <!-- Subtask 2 -->
+                  <tr class="hover:bg-slate-50">
+                    <td class="py-2 px-3">
+                      <div class="flex items-center space-x-1.5">
+                        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">TASK</span>
+                        <span class="font-bold text-blue-600">EPA-1886</span>
+                        <span class="text-slate-800 font-medium truncate max-w-[180px]">Month Close Request - October 2...</span>
+                      </div>
+                    </td>
+                    <td class="py-2 px-2">
+                      <div class="flex items-center space-x-1.5">
+                        <span class="w-5 h-5 rounded-full bg-[#34A87A] text-white text-[9px] font-bold flex items-center justify-center shrink-0">WA</span>
+                        <span class="text-slate-600 truncate max-w-[70px]">wania.siraj...</span>
+                      </div>
+                    </td>
+                    <td class="py-2 px-2 text-slate-600">Nov 15</td>
+                    <td class="py-2 px-2"><span class="px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 font-semibold text-[10px]">High</span></td>
+                    <td class="py-2 px-2"><span class="px-2 py-0.5 rounded border border-slate-200 bg-white text-slate-700 text-[10px] font-medium">• Open Task ▾</span></td>
+                  </tr>
+                  <!-- Subtask 3 -->
+                  <tr class="hover:bg-slate-50">
+                    <td class="py-2 px-3">
+                      <div class="flex items-center space-x-1.5">
+                        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">TASK</span>
+                        <span class="font-bold text-blue-600">EPA-1887</span>
+                        <span class="text-slate-800 font-medium truncate max-w-[180px]">Management Report - October 20...</span>
+                      </div>
+                    </td>
+                    <td class="py-2 px-2">
+                      <div class="flex items-center space-x-1.5">
+                        <span class="w-5 h-5 rounded-full bg-[#34A87A] text-white text-[9px] font-bold flex items-center justify-center shrink-0">WA</span>
+                        <span class="text-slate-600 truncate max-w-[70px]">wania.siraj...</span>
+                      </div>
+                    </td>
+                    <td class="py-2 px-2 text-slate-600">Nov 15</td>
+                    <td class="py-2 px-2"><span class="px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 font-semibold text-[10px]">High</span></td>
+                    <td class="py-2 px-2"><span class="px-2 py-0.5 rounded border border-slate-200 bg-white text-slate-700 text-[10px] font-medium">• Open Task ▾</span></td>
+                  </tr>
+                  <!-- Subtask 4 -->
+                  <tr class="hover:bg-slate-50">
+                    <td class="py-2 px-3">
+                      <div class="flex items-center space-x-1.5">
+                        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">TASK</span>
+                        <span class="font-bold text-blue-600">EPA-1888</span>
+                        <span class="text-slate-800 font-medium truncate max-w-[180px]">Payroll Working and Entry - Octob...</span>
+                      </div>
+                    </td>
+                    <td class="py-2 px-2">
+                      <div class="flex items-center space-x-1.5">
+                        <span class="w-5 h-5 rounded-full bg-[#34A87A] text-white text-[9px] font-bold flex items-center justify-center shrink-0">WA</span>
+                        <span class="text-slate-600 truncate max-w-[70px]">wania.siraj...</span>
+                      </div>
+                    </td>
+                    <td class="py-2 px-2 text-slate-600">Nov 15</td>
+                    <td class="py-2 px-2"><span class="px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 font-semibold text-[10px]">High</span></td>
+                    <td class="py-2 px-2"><span class="px-2 py-0.5 rounded border border-slate-200 bg-white text-slate-700 text-[10px] font-medium">• Open Task ▾</span></td>
+                  </tr>
+                  <!-- Subtask 5 -->
+                  <tr class="hover:bg-slate-50">
+                    <td class="py-2 px-3">
+                      <div class="flex items-center space-x-1.5">
+                        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">TASK</span>
+                        <span class="font-bold text-blue-600">EPA-1889</span>
+                        <span class="text-slate-800 font-medium truncate max-w-[180px]">Prepaid Entries - October 2026</span>
+                      </div>
+                    </td>
+                    <td class="py-2 px-2">
+                      <div class="flex items-center space-x-1.5">
+                        <span class="w-5 h-5 rounded-full bg-[#34A87A] text-white text-[9px] font-bold flex items-center justify-center shrink-0">WA</span>
+                        <span class="text-slate-600 truncate max-w-[70px]">wania.siraj...</span>
+                      </div>
+                    </td>
+                    <td class="py-2 px-2 text-slate-600">Nov 15</td>
+                    <td class="py-2 px-2"><span class="px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 font-semibold text-[10px]">High</span></td>
+                    <td class="py-2 px-2"><span class="px-2 py-0.5 rounded border border-slate-200 bg-white text-slate-700 text-[10px] font-medium">• Open Task ▾</span></td>
+                  </tr>
+                  <!-- Approval Subtask -->
+                  <tr class="hover:bg-slate-50">
+                    <td class="py-2 px-3">
+                      <div class="flex items-center space-x-1.5">
+                        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-50 text-purple-700 border border-purple-200 uppercase">APPROVAL</span>
+                        <span class="font-bold text-blue-600">EPA-1882</span>
+                        <span class="text-slate-800 font-medium truncate max-w-[170px]">Approval: Moby Filter - Task Tr...</span>
+                      </div>
+                    </td>
+                    <td class="py-2 px-2">
+                      <div class="flex items-center space-x-1.5">
+                        <span class="w-5 h-5 rounded-full bg-[#34A87A] text-white text-[9px] font-bold flex items-center justify-center shrink-0">FA</span>
+                        <span class="text-slate-600 truncate max-w-[70px]">Farzeen Ah...</span>
+                      </div>
+                    </td>
+                    <td class="py-2 px-2 text-slate-600">Nov 15</td>
+                    <td class="py-2 px-2 text-slate-400">—</td>
+                    <td class="py-2 px-2"><span class="px-2 py-0.5 rounded border border-slate-200 bg-slate-50 text-slate-600 text-[10px]">○ To Do</span></td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="bg-white border-t border-slate-100 px-3 py-2">
+                <button type="button" class="text-[11px] text-slate-500 hover:text-slate-800 font-medium">+ Create subtask</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Activity Section (EP Central Tabs + New Project Time Logger & Editable Entries) -->
+          <div class="space-y-4 pt-2">
+            <h2 class="text-xs font-bold text-slate-800">Activity</h2>
+
+            <!-- Activity Tabs (Matches EP Central: Time, Comments, Email, Attachments, History) -->
+            <div class="border-b border-slate-200 flex space-x-6 text-xs">
+              <button type="button" class="pb-2 border-b-2 border-blue-600 text-blue-600 font-semibold">Time</button>
+              <button type="button" class="pb-2 text-slate-500 hover:text-slate-800 font-medium">Comments (4)</button>
+              <button type="button" class="pb-2 text-slate-500 hover:text-slate-800 font-medium">Email</button>
+              <button type="button" class="pb-2 text-slate-500 hover:text-slate-800 font-medium">Attachments</button>
+              <button type="button" class="pb-2 text-slate-500 hover:text-slate-800 font-medium">History</button>
+            </div>
+
+            <!-- Log time Card (EP Central Layout + Project Selector & Live Timer) -->
+            <div class="bg-[#F8FAFC] border border-slate-200/90 rounded-xl p-4 space-y-3">
+              
+              <!-- Header + Live Timer -->
+              <div class="flex flex-wrap items-center justify-between gap-2 pb-1">
+                <span class="text-xs font-bold text-slate-800">Log time</span>
+
+                <!-- Live Timer Widget for Active Project -->
+                <div class="flex items-center space-x-2 bg-white border border-slate-200 rounded-lg px-2.5 py-1 shadow-2xs">
+                  <span id="modal-timer-dot" class="w-2 h-2 rounded-full bg-slate-300"></span>
+                  <span id="modal-timer-display" class="font-mono text-xs font-bold text-slate-800">00:00:00</span>
+                  <button type="button" id="modal-timer-btn" onclick="toggleModalTimer()" class="px-2.5 py-1 rounded text-[11px] font-bold bg-[#00D59B] hover:bg-[#00B98C] text-slate-900 transition">
+                    ▶ Start Timer
+                  </button>
+                </div>
+              </div>
+
+              <!-- Project Row (NEW: Choose Project on Task before starting timer or logging time) -->
+              <div class="flex items-center space-x-3">
+                <label class="w-12 text-xs text-slate-600 shrink-0">Project</label>
+                <select id="modal-project-select" class="flex-1 bg-white border border-slate-300 rounded-md px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:border-emerald-600">
+                  <option value="Moby Filters - Monthly Close (Accounting)" selected>Monthly Close — Product: Accounting</option>
+                  <option value="Moby Filters - Understanding system/Correcting EP mistake (Accounting)">Understanding system/Correcting EP mistake — Product: Accounting</option>
+                  <option value="Moby Filters - Ad-hoc Financial Advisory (FP&A)">Ad-hoc Financial Advisory — Product: FP&amp;A</option>
+                  <option value="Moby Filters - Modelling and Proforma (FP&A)">Modelling and Proforma — Product: FP&amp;A</option>
                 </select>
               </div>
 
-              <div class="grid grid-cols-2 gap-3 text-xs">
-                <div>
-                  <label class="block font-semibold text-slate-700 mb-1">Start Date & Time</label>
-                  <div class="flex space-x-1.5">
-                    <input type="date" id="modal-start-date" value="2026-10-22" class="w-1/2 bg-white border border-slate-300 rounded p-1.5">
-                    <input type="time" id="modal-start-time" value="18:52" class="w-1/2 bg-white border border-slate-300 rounded p-1.5 font-mono">
-                  </div>
-                </div>
-                <div>
-                  <label class="block font-semibold text-slate-700 mb-1">End Date & Time</label>
-                  <div class="flex space-x-1.5">
-                    <input type="date" id="modal-end-date" value="2026-10-22" class="w-1/2 bg-white border border-slate-300 rounded p-1.5">
-                    <input type="time" id="modal-end-time" value="20:00" class="w-1/2 bg-white border border-slate-300 rounded p-1.5 font-mono">
-                  </div>
+              <!-- Start Date & Time Row (Exact EP Central Layout) -->
+              <div class="flex items-center space-x-3">
+                <label class="w-12 text-xs text-slate-600 shrink-0">Start</label>
+                <div class="flex-1 flex space-x-2">
+                  <input type="date" id="modal-start-date" value="2026-10-22" class="flex-1 bg-white border border-slate-300 rounded-md px-3 py-2 text-xs text-slate-800">
+                  <input type="time" id="modal-start-time" value="18:52" class="w-36 bg-white border border-slate-300 rounded-md px-3 py-2 text-xs font-mono text-slate-800">
                 </div>
               </div>
 
-              <div>
-                <input type="text" id="modal-note-input" placeholder="Note / description..." class="w-full text-xs bg-white border border-slate-300 rounded-lg p-2">
+              <!-- End Date & Time Row (Exact EP Central Layout) -->
+              <div class="flex items-center space-x-3">
+                <label class="w-12 text-xs text-slate-600 shrink-0">End</label>
+                <div class="flex-1 flex space-x-2">
+                  <input type="date" id="modal-end-date" value="2026-10-22" class="flex-1 bg-white border border-slate-300 rounded-md px-3 py-2 text-xs text-slate-800">
+                  <input type="time" id="modal-end-time" value="20:00" class="w-36 bg-white border border-slate-300 rounded-md px-3 py-2 text-xs font-mono text-slate-800">
+                </div>
               </div>
 
-              <div class="flex justify-end">
-                <button onclick="submitModalTimeLog()" class="px-4 py-2 text-xs font-bold bg-[#00D59B] hover:bg-[#00B98C] text-slate-900 rounded-lg shadow-sm">
-                  Log Time
-                </button>
+              <!-- Note + Log Button Row (Exact EP Central Layout) -->
+              <div class="pt-1 space-y-1">
+                <div class="flex items-center space-x-2">
+                  <input type="text" id="modal-note-input" placeholder="Note (optional)" class="flex-1 bg-white border border-slate-300 rounded-md px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-emerald-600">
+                  <button type="button" onclick="submitModalTimeLog()" class="px-4 py-2 rounded-md text-xs font-bold bg-[#34A87A] hover:bg-[#2c9169] text-white shadow-2xs transition">
+                    Log
+                  </button>
+                </div>
+                <div class="text-[10px] text-slate-400 text-right pr-14">0/300 characters</div>
               </div>
             </div>
 
-            <!-- Logged Time Table -->
-            <div class="border border-slate-200 rounded-xl overflow-hidden">
-              <table class="w-full text-left text-xs">
-                <thead class="bg-slate-50 text-slate-500 uppercase border-b border-slate-200">
-                  <tr>
-                    <th class="py-2 px-3">Project</th>
-                    <th class="py-2 px-3">Date</th>
-                    <th class="py-2 px-3">Duration</th>
-                    <th class="py-2 px-3">Note</th>
-                    <th class="py-2 px-3 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="task-entries-tbody" class="divide-y divide-slate-100"></tbody>
-              </table>
+            <!-- Logged Time Entries Table (View & Edit Time per Project) -->
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-700">Logged Time Entries on EPA-1881</span>
+                <span class="text-[11px] text-slate-500">Click <strong>Edit</strong> to modify project, hours, or note</span>
+              </div>
+              <div class="border border-slate-200 rounded-lg overflow-hidden">
+                <table class="w-full text-left text-xs">
+                  <thead class="bg-slate-50 text-slate-500 uppercase border-b border-slate-200 text-[10px]">
+                    <tr>
+                      <th class="py-2 px-3">Project &amp; Product</th>
+                      <th class="py-2 px-3">Date</th>
+                      <th class="py-2 px-3">Duration</th>
+                      <th class="py-2 px-3">Note</th>
+                      <th class="py-2 px-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="task-entries-tbody" class="divide-y divide-slate-100"></tbody>
+                </table>
+              </div>
             </div>
+
           </div>
         </div>
 
-        <div class="lg:col-span-4 space-y-4 lg:border-l lg:border-slate-200 lg:pl-6 text-xs">
-          <div><span class="text-slate-400 block">Assigned To</span><strong class="text-slate-800">Daim Ashraf</strong></div>
-          <div><span class="text-slate-400 block">Company</span><strong class="text-slate-800">Moby Filters Inc</strong></div>
-          <div><span class="text-slate-400 block">Product</span><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">Accounting</span></div>
-          <div><span class="text-slate-400 block">Total Logged</span><strong class="font-mono text-emerald-700 text-sm" id="sidebar-logged-hours">18h 45m</strong></div>
+        <!-- RIGHT COLUMN (4 cols): Full EP Central Details Sidebar -->
+        <div class="lg:col-span-4 p-5 space-y-5 bg-white text-xs">
+          
+          <!-- Top Status Pill + On Track Badge -->
+          <div class="flex items-center justify-between">
+            <div class="relative">
+              <select class="appearance-none bg-blue-50/40 border border-blue-400 text-blue-600 font-semibold rounded-md pl-3 pr-7 py-1.5 text-xs focus:outline-none">
+                <option selected>• Monthly</option>
+                <option>• Open Task</option>
+                <option>• Weekly</option>
+                <option>• Under Review</option>
+              </select>
+              <span class="pointer-events-none absolute right-2 top-2 text-blue-600 text-[10px]">▾</span>
+            </div>
+
+            <span class="px-2.5 py-1 rounded-full border border-emerald-400 bg-emerald-50 text-emerald-700 font-semibold text-[11px]">
+              • On Track
+            </span>
+          </div>
+
+          <!-- Green Send for Approval Callout Box (Exact EP Central UI) -->
+          <div class="bg-[#ECFDF5] border border-[#A7F3D0] rounded-lg p-3.5 space-y-2.5">
+            <p class="text-xs text-[#065F46] leading-relaxed">
+              Ready for review? Send to <strong>Farzeen Ahmed</strong> to begin the approval.
+            </p>
+            <button type="button" onclick="alert('Task EPA-1881 sent to Farzeen Ahmed for approval!')" class="bg-[#34A87A] hover:bg-[#2c9169] text-white font-semibold text-xs px-3.5 py-1.5 rounded-md shadow-2xs transition">
+              Send for Approval
+            </button>
+          </div>
+
+          <!-- Details Accordion Section -->
+          <div class="space-y-4">
+            <button type="button" class="flex items-center space-x-1.5 text-xs font-bold text-slate-800">
+              <span>⌄</span><span>Details</span>
+            </button>
+
+            <!-- Assigned To -->
+            <div class="space-y-1.5">
+              <label class="block text-[11px] font-semibold text-slate-600">Assigned To</label>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2 min-w-0">
+                  <span class="w-6 h-6 rounded-full bg-[#34A87A] text-white font-bold text-xs flex items-center justify-center shrink-0">W</span>
+                  <span class="text-xs text-slate-800 truncate">wania.siraj@enduringplanet.com</span>
+                </div>
+                <span class="text-[11px] font-semibold text-slate-600 shrink-0 ml-2">👥 3</span>
+              </div>
+            </div>
+
+            <!-- Company -->
+            <div class="space-y-1">
+              <label class="block text-[11px] font-semibold text-slate-600">Company</label>
+              <select class="w-full bg-white border border-slate-200 rounded-md px-3 py-2 text-xs text-slate-800">
+                <option selected>Moby Filters Inc</option>
+                <option>Cambium LLC</option>
+                <option>Dollaride Inc</option>
+                <option>None</option>
+              </select>
+            </div>
+
+            <!-- Product -->
+            <div class="space-y-1">
+              <label class="block text-[11px] font-semibold text-slate-600">Product</label>
+              <select class="w-full bg-white border border-slate-200 rounded-md px-3 py-2 text-xs text-slate-800">
+                <option selected>Accounting</option>
+                <option>Accounting &amp; Bookkeeping</option>
+                <option>FP&amp;A</option>
+              </select>
+            </div>
+
+            <!-- Priority (Low / Medium / High Buttons) -->
+            <div class="space-y-1">
+              <label class="block text-[11px] font-semibold text-slate-600">Priority</label>
+              <div class="inline-flex space-x-1.5">
+                <button type="button" class="px-2.5 py-1 rounded border border-slate-200 text-slate-600 text-xs font-medium hover:bg-slate-50">Low</button>
+                <button type="button" class="px-2.5 py-1 rounded border border-slate-200 text-slate-600 text-xs font-medium hover:bg-slate-50">Medium</button>
+                <button type="button" class="px-2.5 py-1 rounded border border-rose-400 bg-rose-50/50 text-rose-600 text-xs font-bold">High</button>
+              </div>
+            </div>
+
+            <!-- Start Date -->
+            <div class="space-y-1">
+              <label class="block text-[11px] font-semibold text-slate-600">Start Date</label>
+              <div class="relative">
+                <input type="text" value="15/10/2026" class="w-full bg-white border border-slate-200 rounded-md px-3 py-2 text-xs text-slate-800">
+                <span class="absolute right-3 top-2 text-slate-400">📅</span>
+              </div>
+            </div>
+
+            <!-- Due Date -->
+            <div class="space-y-1">
+              <label class="block text-[11px] font-semibold text-slate-600">Due Date</label>
+              <div class="relative">
+                <input type="text" value="15/11/2026" class="w-full bg-white border border-slate-200 rounded-md px-3 py-2 text-xs text-slate-800">
+                <span class="absolute right-3 top-2 text-slate-400">📅</span>
+              </div>
+            </div>
+
+            <!-- Estimated Hours -->
+            <div class="space-y-1">
+              <label class="block text-[11px] font-semibold text-slate-600">Estimated Hours</label>
+              <input type="text" value="25.00" class="w-full bg-white border border-slate-200 rounded-md px-3 py-2 text-xs text-slate-800">
+            </div>
+
+            <!-- Total Logged Time Summary -->
+            <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+              <span class="text-[11px] font-semibold text-slate-500">Total Logged Time</span>
+              <strong class="font-mono text-emerald-700 text-sm" id="sidebar-logged-hours">7h 15m</strong>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Sticky Modal Bottom Footer (Matches EP Central: Delete on left, Cancel + Save on right) -->
+      <div class="px-5 py-3 bg-white border-t border-slate-200 flex items-center justify-between shrink-0">
+        <button type="button" onclick="closeTaskModal()" class="px-3 py-1.5 rounded-md border border-rose-300 text-rose-600 hover:bg-rose-50 text-xs font-semibold flex items-center space-x-1.5 transition">
+          <span>🗑</span><span>Delete</span>
+        </button>
+        <div class="flex items-center space-x-2">
+          <button type="button" onclick="closeTaskModal()" class="px-3.5 py-1.5 rounded-md border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-semibold transition">
+            Cancel
+          </button>
+          <button type="button" onclick="closeTaskModal()" class="px-4 py-1.5 rounded-md bg-[#34A87A] hover:bg-[#2c9169] text-white text-xs font-semibold shadow-2xs transition">
+            Save
+          </button>
         </div>
       </div>
+
     </div>
   </div>
 
@@ -1419,9 +1942,10 @@
         <div>
           <label class="block font-semibold text-slate-700 mb-1">Project</label>
           <select id="edit-entry-project" class="w-full border border-slate-300 rounded-lg p-2">
-            <option value="Moby Filters - Monthly Close (Accounting)">Moby Filters - Monthly Close (Accounting)</option>
-            <option value="Moby Filters - Ad-hoc Financial Advisory (FP&A)">Moby Filters - Ad-hoc Financial Advisory (FP&A)</option>
-            <option value="Cambium - Understanding system/Correcting EP mistake">Cambium - Understanding system/Correcting EP mistake</option>
+            <option value="Moby Filters - Monthly Close (Accounting)">Monthly Close — Product: Accounting</option>
+            <option value="Moby Filters - Understanding system/Correcting EP mistake (Accounting)">Understanding system/Correcting EP mistake — Product: Accounting</option>
+            <option value="Moby Filters - Ad-hoc Financial Advisory (FP&A)">Ad-hoc Financial Advisory — Product: FP&amp;A</option>
+            <option value="Moby Filters - Modelling and Proforma (FP&A)">Modelling and Proforma — Product: FP&amp;A</option>
           </select>
         </div>
         <div class="grid grid-cols-2 gap-2">
@@ -2011,8 +2535,58 @@
     }
 
     // =========================================================================
-    // TASK MODAL TIME LOGGING & EDITING
+    // TASK MODAL TIME LOGGING, LIVE TIMER & EDITING
     // =========================================================================
+    let modalTimerInterval = null;
+    let modalTimerSec = 0;
+
+    function toggleModalTimer() {
+      const btn = document.getElementById('modal-timer-btn');
+      const dot = document.getElementById('modal-timer-dot');
+      const disp = document.getElementById('modal-timer-display');
+
+      if (!modalTimerInterval) {
+        // Start Timer
+        modalTimerSec = 0;
+        if (dot) dot.className = 'w-2 h-2 rounded-full bg-rose-500 animate-pulse';
+        if (btn) {
+          btn.textContent = '⏹ Stop & Log';
+          btn.className = 'px-2.5 py-1 rounded text-[11px] font-bold bg-rose-600 hover:bg-rose-700 text-white transition';
+        }
+        modalTimerInterval = setInterval(() => {
+          modalTimerSec++;
+          if (disp) disp.textContent = formatSecToHMS(modalTimerSec);
+        }, 1000);
+      } else {
+        // Stop & Log Timer
+        clearInterval(modalTimerInterval);
+        modalTimerInterval = null;
+        const loggedSec = Math.max(modalTimerSec, 60);
+        const project = document.getElementById('modal-project-select').value;
+        const date = document.getElementById('modal-start-date').value || '2026-10-22';
+        const note = document.getElementById('modal-note-input').value.trim() || 'Tracked via live task timer';
+
+        taskEntries.unshift({
+          id: 't-' + Date.now(),
+          project,
+          date,
+          durationSec: loggedSec,
+          durationStr: formatSecToHMS(loggedSec),
+          note
+        });
+
+        modalTimerSec = 0;
+        if (disp) disp.textContent = '00:00:00';
+        if (dot) dot.className = 'w-2 h-2 rounded-full bg-slate-300';
+        if (btn) {
+          btn.textContent = '▶ Start Timer';
+          btn.className = 'px-2.5 py-1 rounded text-[11px] font-bold bg-[#00D59B] hover:bg-[#00B98C] text-slate-900 transition';
+        }
+        document.getElementById('modal-note-input').value = '';
+        renderTaskEntries();
+      }
+    }
+
     function openTaskModal() {
       renderTaskEntries();
       document.getElementById('task-modal').classList.remove('hidden');
