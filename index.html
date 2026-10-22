@@ -315,45 +315,47 @@
     <main class="flex-1 overflow-y-auto custom-scroll bg-white flex flex-col">
 
       <!-- ===================================================================== -->
-      <!-- VIEW 1: SETTINGS > CLOCKIFY INTEGRATION (Matching Jira Import Design) -->
+      <!-- VIEW 1: SETTINGS > CLOCKIFY INTEGRATION (Multi-Screen Jira-Style Flow)-->
       <!-- ===================================================================== -->
-      <section id="view-settings-clockify" class="view-panel flex-1 flex flex-col p-6">
+      <section id="view-settings-clockify" class="view-panel flex-1 flex flex-col p-6 bg-white">
         
-        <!-- Top Breadcrumb matching `settings / jira` -->
-        <div class="text-sm text-slate-600 mb-8">
+        <!-- Top Page Path matching `settings / jira` -->
+        <div class="text-sm text-slate-600 mb-6">
           settings / <span class="text-slate-900 font-medium">clockify</span>
         </div>
 
-        <!-- Centered Jira-Style Import Container -->
-        <div class="max-w-2xl w-full mx-auto space-y-6">
+        <!-- Dynamic Max-Width Container (max-w-3xl for Select/Map, max-w-6xl for Preview) -->
+        <div id="clockify-import-container" class="max-w-3xl w-full mx-auto space-y-5 transition-all">
           
-          <!-- Header Row: Icon + Title + Disconnect Button -->
+          <!-- Header Row: Sync Icon + Title + Disconnect Button (Matches JiraImportView.tsx) -->
           <div class="flex items-start justify-between">
             <div class="flex items-center space-x-3">
               <div class="text-[#00D59B] flex items-center justify-center">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
               </div>
               <div>
                 <h1 class="text-xl font-bold text-slate-900 leading-tight">Clockify Import</h1>
-                <p class="text-xs text-slate-500 mt-0.5">Import tasks, projects & time entries from Clockify Cloud into EP</p>
+                <p class="text-xs text-slate-500 mt-0.5">Import projects, tasks, and time entries from Clockify into EP</p>
               </div>
             </div>
 
-            <button onclick="alert('Clockify connection is managed via backend environment variables (CLOCKIFY_API_KEY).')" class="px-3 py-1.5 rounded border border-rose-300 text-rose-500 hover:bg-rose-50 text-[11px] font-semibold tracking-wide uppercase flex items-center space-x-1.5 transition">
+            <button onclick="alert('Clockify API authentication is configured via backend environment variables (CLOCKIFY_API_KEY).')" class="px-3 py-1.5 rounded border border-rose-300 text-rose-600 hover:bg-rose-50 text-[11px] font-semibold tracking-wide uppercase flex items-center space-x-1.5 transition">
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
               <span>DISCONNECT</span>
             </button>
           </div>
 
-          <!-- Section Label -->
-          <div class="text-xs font-bold text-slate-800 pt-2">
-            Select Workspace & Import Parameters
-          </div>
+          <!-- Step Breadcrumb Trail (Matches JiraImportView.tsx: Select Workspace > Map Fields > Preview & Confirm) -->
+          <nav id="clockify-step-breadcrumbs" class="flex items-center space-x-2 text-xs py-1" aria-label="Clockify import progress">
+            <!-- Dynamically rendered by setClockifyImportStep() -->
+          </nav>
 
-          <!-- Main Bordered Box (Matching Jira Import Box) -->
-          <div class="bg-white border border-slate-200 rounded-md p-6 shadow-sm space-y-5">
+          <!-- ================================================================= -->
+          <!-- STEP 1 SCREEN: SELECT WORKSPACE & BATCH PARAMETERS (`select`)     -->
+          <!-- ================================================================= -->
+          <div id="clockify-step-select" class="bg-white border border-slate-200 rounded-md p-6 shadow-sm space-y-5">
             
-            <!-- Row 1: Connected Pill + Workspace Dropdown (API Key hidden in .env) -->
+            <!-- Connected Chip + Workspace Selector (No API Key shown in UI) -->
             <div class="flex flex-wrap items-center gap-3">
               <span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#2E7D32] text-white">
                 <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
@@ -361,237 +363,450 @@
               </span>
 
               <div class="relative">
-                <select id="import-workspace-select" class="appearance-none bg-white border border-slate-300 hover:border-slate-400 rounded px-3.5 py-1.5 pr-8 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <select id="import-workspace-select" class="appearance-none bg-white border border-slate-300 hover:border-slate-400 rounded px-3.5 py-1.5 pr-8 text-xs font-medium text-slate-800 focus:outline-none focus:border-emerald-600">
                   <option value="daim" selected>Daim Ashraf's workspace</option>
                   <option value="ep-accounting">Enduring Planet - Accounting Workspace</option>
                 </select>
-                <svg class="w-3.5 h-3.5 text-slate-500 absolute right-2.5 top-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-              </div>
-
-              <span class="text-[11px] text-slate-400 ml-auto">Authenticated via Backend <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600">.env</code></span>
-            </div>
-
-            <!-- Row 2: Select Time Range to Import -->
-            <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-800">Select Time Range</label>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <select id="import-time-range" onchange="handleImportTimeRangeChange()" class="w-full bg-white border border-slate-300 rounded px-3 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                  <option value="this_month" selected>This Month (Oct 1 – Oct 31, 2026)</option>
-                  <option value="this_week">This Week (Oct 19 – Oct 25, 2026)</option>
-                  <option value="last_week">Last Week (Oct 12 – Oct 18, 2026)</option>
-                  <option value="all_time">All Time (Full Historical Import)</option>
-                  <option value="custom">Custom Time Range...</option>
-                </select>
-
-                <!-- Custom Date Pickers (Shown when Custom Time Range is selected) -->
-                <div id="import-custom-dates" class="hidden flex items-center space-x-2">
-                  <input type="date" id="import-start-date" value="2026-10-01" class="w-1/2 border border-slate-300 rounded px-2.5 py-1.5 text-xs">
-                  <span class="text-slate-400 text-xs">to</span>
-                  <input type="date" id="import-end-date" value="2026-10-22" class="w-1/2 border border-slate-300 rounded px-2.5 py-1.5 text-xs">
-                </div>
+                <svg class="w-3.5 h-3.5 text-slate-500 absolute right-2.5 top-2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
               </div>
             </div>
 
-            <!-- Row 3: Batch Onboarding Import Mode Dropdown -->
-            <div class="space-y-1.5">
-              <label class="block text-xs font-bold text-slate-800">
-                Select Import Mode <span class="font-normal text-slate-500">(Batch Onboarding by User, Client, or Project)</span>
-              </label>
-              <select id="import-scope-mode" onchange="handleImportScopeChange()" class="w-full bg-white border border-slate-300 rounded px-3 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                <option value="all">Import All Tasks & Time Entries</option>
-                <option value="client" selected>Import for Certain Client (Company)</option>
-                <option value="user">Import for Certain User (Team Member Batch)</option>
-                <option value="project">Import for Certain Project</option>
-                <option value="combined">Custom Filter (Combine User + Client + Project)</option>
-              </select>
+            <div class="text-sm font-bold text-slate-900">
+              Select Clockify Import Scope
             </div>
 
-            <!-- Dynamic Sub-Filters for User / Client / Project Batch Selection -->
-            <div id="import-batch-filters" class="bg-slate-50 border border-slate-200 rounded-md p-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="space-y-4">
               
-              <!-- Client Selector -->
-              <div id="batch-filter-client">
-                <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Clockify Client</label>
-                <select id="import-client-select" class="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-xs font-medium text-slate-800">
+              <!-- Field 1: Batch Onboarding Mode (All / Specific Client / Specific User / Specific Project) -->
+              <div class="relative">
+                <label class="block text-[11px] font-semibold text-slate-500 mb-1">Import Scope (Batch Onboarding)</label>
+                <select id="import-scope-mode" onchange="handleImportScopeChange()" class="w-full bg-white border border-slate-300 hover:border-slate-400 rounded px-3 py-2.5 text-xs font-medium text-slate-800 focus:outline-none focus:border-emerald-600">
+                  <option value="all">Import all tasks & time entries in workspace</option>
+                  <option value="client" selected>Import for a certain Client (Company)</option>
+                  <option value="user">Import for a certain User (Team Member batch)</option>
+                  <option value="project">Import for a certain Project</option>
+                </select>
+              </div>
+
+              <!-- Conditional Picker: Specific Client -->
+              <div id="batch-filter-client" class="relative">
+                <label class="block text-[11px] font-semibold text-slate-500 mb-1">Clockify Client</label>
+                <select id="import-client-select" class="w-full bg-white border border-slate-300 hover:border-slate-400 rounded px-3 py-2.5 text-xs font-medium text-slate-800 focus:outline-none focus:border-emerald-600">
+                  <option value="ALL">All Clients (Cambium, Moby Filters, Dollaride, Portmanteau)</option>
                   <option value="Cambium" selected>Cambium (26h 40m)</option>
                   <option value="Moby Filters">Moby Filters (18h 45m)</option>
                   <option value="Dollaride">Dollaride (14h 20m)</option>
                   <option value="Portmanteau">Portmanteau (12h 00m)</option>
-                  <option value="ALL">All Clients</option>
                 </select>
               </div>
 
-              <!-- User Selector -->
-              <div id="batch-filter-user">
-                <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Clockify User</label>
-                <select id="import-user-select" class="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-xs font-medium text-slate-800">
-                  <option value="ALL" selected>All Users (Hassan, Ahmed, Daim)</option>
-                  <option value="Hassan">Hassan (17h 00m)</option>
-                  <option value="Ahmed Raza">Ahmed Raza (03h 10m)</option>
-                  <option value="Daim Ashraf">Daim Ashraf (18h 45m)</option>
+              <!-- Conditional Picker: Specific User -->
+              <div id="batch-filter-user" class="relative hidden">
+                <label class="block text-[11px] font-semibold text-slate-500 mb-1">Clockify User</label>
+                <select id="import-user-select" class="w-full bg-white border border-slate-300 hover:border-slate-400 rounded px-3 py-2.5 text-xs font-medium text-slate-800 focus:outline-none focus:border-emerald-600">
+                  <option value="ALL">All Users (Hassan, Ahmed Raza, Daim Ashraf)</option>
+                  <option value="Hassan" selected>Hassan (hassan@enduringplanet.com)</option>
+                  <option value="Ahmed Raza">Ahmed Raza (ahmed.raza@enduringplanet.com)</option>
+                  <option value="Daim Ashraf">Daim Ashraf (daim@enduringplanet.com)</option>
                 </select>
               </div>
 
-              <!-- Project Selector -->
-              <div id="batch-filter-project">
-                <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Clockify Project</label>
-                <select id="import-project-select" class="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 text-xs font-medium text-slate-800">
-                  <option value="ALL" selected>All Projects for Client</option>
-                  <option value="Understanding system/Correcting EP mistake">Understanding system/Correcting EP mistake</option>
-                  <option value="Monthly Close">Monthly Close</option>
-                  <option value="Modelling and Proforma">Modelling and Proforma</option>
-                  <option value="FP&A Retainer Services">FP&A Retainer Services</option>
+              <!-- Conditional Picker: Specific Project -->
+              <div id="batch-filter-project" class="relative hidden">
+                <label class="block text-[11px] font-semibold text-slate-500 mb-1">Clockify Project</label>
+                <select id="import-project-select" class="w-full bg-white border border-slate-300 hover:border-slate-400 rounded px-3 py-2.5 text-xs font-medium text-slate-800 focus:outline-none focus:border-emerald-600">
+                  <option value="ALL">All Projects</option>
+                  <option value="Understanding system/Correcting EP mistake" selected>Understanding system/Correcting EP mistake (Cambium)</option>
+                  <option value="Monthly Close">Monthly Close (Moby Filters)</option>
+                  <option value="Ad-hoc Financial Advisory">Ad-hoc Financial Advisory (Moby Filters)</option>
+                  <option value="Modelling and Proforma">Modelling and Proforma (Dollaride)</option>
                 </select>
+              </div>
+
+              <!-- Field 2: Date Option (This Month / This Week / Last Week / All Time / Custom) -->
+              <div class="relative">
+                <label class="block text-[11px] font-semibold text-slate-500 mb-1">Date Option</label>
+                <select id="import-time-range" onchange="handleImportTimeRangeChange()" class="w-full bg-white border border-slate-300 hover:border-slate-400 rounded px-3 py-2.5 text-xs font-medium text-slate-800 focus:outline-none focus:border-emerald-600">
+                  <option value="this_month" selected>This Month (Oct 1 – Oct 31, 2026)</option>
+                  <option value="this_week">This Week (Oct 19 – Oct 25, 2026)</option>
+                  <option value="last_week">Last Week (Oct 12 – Oct 18, 2026)</option>
+                  <option value="all_time">All Time (Import all historical records)</option>
+                  <option value="custom">Custom Time Range...</option>
+                </select>
+              </div>
+
+              <!-- Custom Date Inputs -->
+              <div id="import-custom-dates" class="hidden grid grid-cols-2 gap-3 pt-1">
+                <div>
+                  <label class="block text-[11px] font-semibold text-slate-500 mb-1">Start Date</label>
+                  <input type="date" id="import-start-date" value="2026-10-01" class="w-full border border-slate-300 rounded px-3 py-2 text-xs">
+                </div>
+                <div>
+                  <label class="block text-[11px] font-semibold text-slate-500 mb-1">End Date</label>
+                  <input type="date" id="import-end-date" value="2026-10-22" class="w-full border border-slate-300 rounded px-3 py-2 text-xs">
+                </div>
+              </div>
+
+              <!-- FETCH & PREPARE Button (Switches to Separate Step 2 Screen!) -->
+              <div class="pt-2">
+                <button onclick="fetchAndPrepareClockify()" id="fetch-prepare-btn" class="px-4 py-2 rounded text-xs font-bold uppercase tracking-wide bg-[#00D59B] hover:bg-[#00B98C] text-slate-900 shadow-sm transition">
+                  FETCH & PREPARE
+                </button>
               </div>
 
             </div>
+          </div>
 
-            <!-- FETCH & PREPARE Button (Matching Jira's button) -->
-            <div class="pt-1 flex items-center space-x-3">
-              <button onclick="fetchAndPrepareClockify()" id="fetch-prepare-btn" class="px-4 py-2 rounded text-xs font-bold uppercase tracking-wide bg-[#00D59B] hover:bg-[#00B98C] text-slate-900 shadow-sm transition">
-                FETCH & PREPARE
+          <!-- ================================================================= -->
+          <!-- STEP 2 SCREEN: MAP FIELDS (`mapping` — Separate Screen like Jira) -->
+          <!-- ================================================================= -->
+          <div id="clockify-step-mapping" class="hidden space-y-5">
+            
+            <!-- Card 1: Company Mapping (Exact visual match to JiraImportView.tsx) -->
+            <div class="bg-white border border-slate-200 rounded-md p-6 shadow-sm">
+              <h2 class="text-sm font-bold text-slate-900 mb-1">Company Mapping</h2>
+              <p class="text-xs text-slate-500 mb-4">
+                Map unique Clockify Client values to existing EP Companies on the server. Matching company names are auto-mapped automatically (creating new companies is disabled).
+              </p>
+
+              <div class="space-y-3" id="company-mapping-rows">
+                <!-- Row 1: Cambium -->
+                <div class="flex flex-wrap items-center gap-4">
+                  <span class="text-xs font-medium text-slate-800 w-48 shrink-0">Cambium</span>
+                  <div class="relative w-72">
+                    <select class="w-full bg-white border border-slate-300 hover:border-slate-400 rounded px-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-emerald-600">
+                      <option value="104" selected>Cambium</option>
+                      <option value="188">Moby Filters</option>
+                      <option value="202">Dollaride</option>
+                      <option value="219">Portmanteau</option>
+                    </select>
+                  </div>
+                  <span class="text-[11px] text-emerald-600 font-semibold">✓ Auto-matched</span>
+                </div>
+
+                <!-- Row 2: Dollaride -->
+                <div class="flex flex-wrap items-center gap-4">
+                  <span class="text-xs font-medium text-slate-800 w-48 shrink-0">Dollaride</span>
+                  <div class="relative w-72">
+                    <select class="w-full bg-white border border-slate-300 hover:border-slate-400 rounded px-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-emerald-600">
+                      <option value="202" selected>Dollaride</option>
+                      <option value="104">Cambium</option>
+                      <option value="188">Moby Filters</option>
+                      <option value="219">Portmanteau</option>
+                    </select>
+                  </div>
+                  <span class="text-[11px] text-emerald-600 font-semibold">✓ Auto-matched</span>
+                </div>
+
+                <!-- Row 3: Moby Filters -->
+                <div class="flex flex-wrap items-center gap-4">
+                  <span class="text-xs font-medium text-slate-800 w-48 shrink-0">Moby Filters</span>
+                  <div class="relative w-72">
+                    <select class="w-full bg-white border border-slate-300 hover:border-slate-400 rounded px-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-emerald-600">
+                      <option value="188" selected>Moby Filters</option>
+                      <option value="104">Cambium</option>
+                      <option value="202">Dollaride</option>
+                      <option value="219">Portmanteau</option>
+                    </select>
+                  </div>
+                  <span class="text-[11px] text-emerald-600 font-semibold">✓ Auto-matched</span>
+                </div>
+
+                <!-- Row 4: Portmanteau -->
+                <div class="flex flex-wrap items-center gap-4">
+                  <span class="text-xs font-medium text-slate-800 w-48 shrink-0">Portmanteau</span>
+                  <div class="relative w-72">
+                    <select class="w-full bg-white border border-slate-300 hover:border-slate-400 rounded px-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-emerald-600">
+                      <option value="219" selected>Portmanteau</option>
+                      <option value="104">Cambium</option>
+                      <option value="188">Moby Filters</option>
+                      <option value="202">Dollaride</option>
+                    </select>
+                  </div>
+                  <span class="text-[11px] text-emerald-600 font-semibold">✓ Auto-matched</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 2: Map to Product (Exact visual match to JiraImportView.tsx) -->
+            <div class="bg-white border border-slate-200 rounded-md p-6 shadow-sm">
+              <h2 class="text-sm font-bold text-slate-900 mb-1">Map to Product</h2>
+              <p class="text-xs text-slate-500 mb-4">
+                Pick the EP product these projects and tasks belong to. Imported projects and time entries will attach to this product line for reporting.
+              </p>
+
+              <div class="relative w-80">
+                <label class="absolute -top-2 left-2.5 bg-white px-1 text-[10px] font-medium text-slate-500">Product (optional)</label>
+                <select id="mapping-default-product" onchange="syncDefaultProductMapping(this.value)" class="w-full bg-white border border-slate-300 hover:border-slate-400 rounded px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-emerald-600">
+                  <option value="Accounting" selected>Accounting</option>
+                  <option value="FP&A">FP&A</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Card 3: Project Mapping (Clockify Project -> TMS Project & Product) -->
+            <div class="bg-white border border-slate-200 rounded-md p-6 shadow-sm">
+              <h2 class="text-sm font-bold text-slate-900 mb-1">Project Mapping</h2>
+              <p class="text-xs text-slate-500 mb-4">
+                Map Clockify Projects to existing EP Task Projects or auto-create them under the selected Product.
+              </p>
+
+              <div class="space-y-3">
+                <!-- Project 1 -->
+                <div class="flex flex-wrap items-center gap-3">
+                  <div class="w-60 shrink-0">
+                    <div class="text-xs font-medium text-slate-800 truncate">Understanding system/Correcting EP mistake</div>
+                    <div class="text-[11px] text-slate-400">Client: Cambium</div>
+                  </div>
+                  <select class="project-product-select bg-white border border-slate-300 rounded px-2.5 py-1.5 text-xs text-slate-800 w-32">
+                    <option value="Accounting" selected>Accounting</option>
+                    <option value="FP&A">FP&A</option>
+                  </select>
+                  <select class="bg-white border border-slate-300 rounded px-3 py-1.5 text-xs text-slate-800 w-72">
+                    <option selected>Create New Project: "Understanding system/Correcting EP mistake"</option>
+                    <option>Cambium - Monthly Close (Existing)</option>
+                  </select>
+                </div>
+
+                <!-- Project 2 -->
+                <div class="flex flex-wrap items-center gap-3">
+                  <div class="w-60 shrink-0">
+                    <div class="text-xs font-medium text-slate-800 truncate">Monthly Close</div>
+                    <div class="text-[11px] text-slate-400">Client: Moby Filters</div>
+                  </div>
+                  <select class="project-product-select bg-white border border-slate-300 rounded px-2.5 py-1.5 text-xs text-slate-800 w-32">
+                    <option value="Accounting" selected>Accounting</option>
+                    <option value="FP&A">FP&A</option>
+                  </select>
+                  <select class="bg-white border border-slate-300 rounded px-3 py-1.5 text-xs text-slate-800 w-72">
+                    <option selected>Moby Filters - Monthly Close (Auto-Matched)</option>
+                    <option>Create New Project: "Monthly Close"</option>
+                  </select>
+                </div>
+
+                <!-- Project 3 -->
+                <div class="flex flex-wrap items-center gap-3">
+                  <div class="w-60 shrink-0">
+                    <div class="text-xs font-medium text-slate-800 truncate">Ad-hoc Financial Advisory</div>
+                    <div class="text-[11px] text-slate-400">Client: Moby Filters</div>
+                  </div>
+                  <select class="project-product-select bg-white border border-slate-300 rounded px-2.5 py-1.5 text-xs text-slate-800 w-32">
+                    <option value="Accounting">Accounting</option>
+                    <option value="FP&A" selected>FP&A</option>
+                  </select>
+                  <select class="bg-white border border-slate-300 rounded px-3 py-1.5 text-xs text-slate-800 w-72">
+                    <option selected>Moby Filters - Ad-hoc Financial Advisory (Auto-Matched)</option>
+                    <option>Create New Project: "Ad-hoc Financial Advisory"</option>
+                  </select>
+                </div>
+
+                <!-- Project 4 -->
+                <div class="flex flex-wrap items-center gap-3">
+                  <div class="w-60 shrink-0">
+                    <div class="text-xs font-medium text-slate-800 truncate">Modelling and Proforma</div>
+                    <div class="text-[11px] text-slate-400">Client: Dollaride</div>
+                  </div>
+                  <select class="project-product-select bg-white border border-slate-300 rounded px-2.5 py-1.5 text-xs text-slate-800 w-32">
+                    <option value="Accounting">Accounting</option>
+                    <option value="FP&A" selected>FP&A</option>
+                  </select>
+                  <select class="bg-white border border-slate-300 rounded px-3 py-1.5 text-xs text-slate-800 w-72">
+                    <option selected>Create New Project: "Modelling and Proforma"</option>
+                    <option>Dollaride - Proforma Model (Existing)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 4: User Mapping (Exact visual match to JiraImportView.tsx) -->
+            <div class="bg-white border border-slate-200 rounded-md p-6 shadow-sm">
+              <h2 class="text-sm font-bold text-slate-900 mb-1">User Mapping</h2>
+              <p class="text-xs text-slate-500 mb-4">
+                Map Clockify users to EP users. Unmapped users will be skipped for time entry assignment. Your direct reports and their teams are listed first.
+              </p>
+
+              <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2.5">
+                MY REPORTS & THEIR TEAMS
+              </div>
+
+              <div class="space-y-3">
+                <!-- User 1 -->
+                <div class="flex flex-wrap items-center gap-4">
+                  <div class="w-64 shrink-0">
+                    <div class="text-xs font-medium text-slate-800">Hassan</div>
+                    <div class="text-[11px] text-slate-400">hassan@enduringplanet.com</div>
+                  </div>
+                  <select class="bg-white border border-slate-300 rounded px-3 py-1.5 text-xs text-slate-800 w-72">
+                    <option selected>Hassan (hassan@enduringplanet.com)</option>
+                    <option>Ahmed Raza (ahmed.raza@enduringplanet.com)</option>
+                    <option>Daim Ashraf (daim@enduringplanet.com)</option>
+                    <option value="">Skip / Unmapped</option>
+                  </select>
+                </div>
+
+                <!-- User 2 -->
+                <div class="flex flex-wrap items-center gap-4">
+                  <div class="w-64 shrink-0">
+                    <div class="text-xs font-medium text-slate-800">Ahmed Raza</div>
+                    <div class="text-[11px] text-slate-400">ahmed.raza@enduringplanet.com</div>
+                  </div>
+                  <select class="bg-white border border-slate-300 rounded px-3 py-1.5 text-xs text-slate-800 w-72">
+                    <option selected>Ahmed Raza (ahmed.raza@enduringplanet.com)</option>
+                    <option>Hassan (hassan@enduringplanet.com)</option>
+                    <option>Daim Ashraf (daim@enduringplanet.com)</option>
+                    <option value="">Skip / Unmapped</option>
+                  </select>
+                </div>
+
+                <!-- User 3 -->
+                <div class="flex flex-wrap items-center gap-4">
+                  <div class="w-64 shrink-0">
+                    <div class="text-xs font-medium text-slate-800">Daim Ashraf</div>
+                    <div class="text-[11px] text-slate-400">daim@enduringplanet.com</div>
+                  </div>
+                  <select class="bg-white border border-slate-300 rounded px-3 py-1.5 text-xs text-slate-800 w-72">
+                    <option selected>Daim Ashraf (daim@enduringplanet.com)</option>
+                    <option>Hassan (hassan@enduringplanet.com)</option>
+                    <option>Ahmed Raza (ahmed.raza@enduringplanet.com)</option>
+                    <option value="">Skip / Unmapped</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bottom Navigation Buttons (Matches JiraImportView.tsx: Back + Confirm Mappings & Preview) -->
+            <div class="flex items-center space-x-3 pt-1">
+              <button onclick="setClockifyImportStep('select')" class="px-4 py-2 rounded border border-slate-300 hover:bg-slate-50 text-xs font-bold uppercase tracking-wide text-slate-700 flex items-center space-x-1.5 transition">
+                <span>← BACK</span>
               </button>
-              <span id="fetch-status-text" class="text-xs text-slate-500">Click to preview matched Companies, Products, Users, and Time Entries</span>
+              <button onclick="setClockifyImportStep('preview')" class="px-5 py-2 rounded bg-[#00D59B] hover:bg-[#00B98C] text-slate-900 text-xs font-bold uppercase tracking-wide shadow-sm transition">
+                CONFIRM MAPPINGS & PREVIEW
+              </button>
             </div>
 
           </div>
 
-          <!-- =================================================================== -->
-          <!-- PREPARED IMPORT MAPPING & PREVIEW PANEL (Appears on Fetch & Prepare)-->
-          <!-- =================================================================== -->
-          <div id="prepared-import-panel" class="bg-white border border-slate-200 rounded-md p-6 shadow-sm space-y-6">
+          <!-- ================================================================= -->
+          <!-- STEP 3 SCREEN: PREVIEW & CONFIRM (`preview` — Separate Screen)    -->
+          <!-- ================================================================= -->
+          <div id="clockify-step-preview" class="hidden space-y-5">
             
-            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <h2 class="text-sm font-bold text-slate-900">Prepared Import Mapping & Verification</h2>
-                <p class="text-xs text-slate-500" id="prepared-summary-subtitle">
-                  Showing fetched records for <strong>Cambium</strong> • <strong>This Month</strong> • <strong>All Users</strong>
-                </p>
-              </div>
-              <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                7 Time Entries Ready
-              </span>
-            </div>
-
-            <!-- 1. Client -> Company Auto-Match (No Create New Company) -->
-            <div class="space-y-2">
+            <div class="bg-white border border-slate-200 rounded-md p-6 shadow-sm space-y-4">
+              
+              <!-- Header -->
               <div class="flex items-center justify-between">
-                <label class="text-xs font-bold text-slate-800">1. Client $\rightarrow$ EP Company Mapping</label>
-                <span class="text-[11px] text-slate-500">Strictly maps to existing EP Companies</span>
+                <h2 class="text-sm font-bold text-slate-900">Import Preview</h2>
+                <span id="preview-selected-count-label" class="text-xs text-slate-500">11 of 11 selected</span>
               </div>
-              <table class="w-full text-left text-xs border border-slate-200 rounded">
-                <thead class="bg-slate-50 text-slate-500 uppercase text-[10px]">
-                  <tr>
-                    <th class="p-2.5">Clockify Client</th>
-                    <th class="p-2.5">Matched EP Central Company</th>
-                    <th class="p-2.5">Status</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 font-medium">
-                  <tr>
-                    <td class="p-2.5 font-bold text-slate-800" id="mapped-client-name">Cambium</td>
-                    <td class="p-2.5">
-                      <select class="bg-white border border-slate-300 rounded px-2 py-1 text-xs font-semibold text-slate-800">
-                        <option selected>Cambium LLC (Existing EP Company #104)</option>
-                        <option>Moby Filters Inc (Existing EP Company #188)</option>
-                        <option>Dollaride Inc (Existing EP Company #202)</option>
-                        <option>Portmanteau Inc (Existing EP Company #219)</option>
-                      </select>
-                    </td>
-                    <td class="p-2.5"><span class="text-emerald-600 font-bold">✓ Auto-Matched</span></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
 
-            <!-- 2. Project -> Product & TMS Project Mapping -->
-            <div class="space-y-2">
-              <label class="text-xs font-bold text-slate-800">2. Project $\rightarrow$ Product & Project Mapping</label>
-              <table class="w-full text-left text-xs border border-slate-200 rounded">
-                <thead class="bg-slate-50 text-slate-500 uppercase text-[10px]">
-                  <tr>
-                    <th class="p-2.5">Clockify Project</th>
-                    <th class="p-2.5">Target EP Product</th>
-                    <th class="p-2.5">Target TMS Project</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 font-medium">
-                  <tr>
-                    <td class="p-2.5 font-bold text-slate-800">Understanding system/Correcting EP mistake</td>
-                    <td class="p-2.5">
-                      <select class="bg-white border border-slate-300 rounded px-2 py-1 text-xs font-semibold text-emerald-800 bg-emerald-50">
-                        <option selected>Accounting</option>
-                        <option>FP&A</option>
-                      </select>
-                    </td>
-                    <td class="p-2.5">
-                      <select class="bg-white border border-slate-300 rounded px-2 py-1 text-xs text-slate-800">
-                        <option selected>Auto-Create: "Understanding system/Correcting EP mistake"</option>
-                        <option>Map to Existing: "Cambium - Monthly Close"</option>
-                      </select>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+              <!-- Breakdown Alert (Matches JiraImportView.tsx Alert) -->
+              <div class="bg-emerald-50 border border-emerald-200 rounded-md px-4 py-3 flex items-start space-x-2.5">
+                <svg class="w-4 h-4 text-emerald-700 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                <div class="text-xs text-emerald-950">
+                  <div class="font-bold" id="preview-banner-summary">
+                    Importing 11 time entries across 4 mapped projects (Total: 38:25:00)
+                  </div>
+                  <div class="text-[11px] text-emerald-800 mt-0.5" id="preview-banner-sub">
+                    All Clients auto-matched to existing EP Companies • Linked to Accounting & FP&A Products
+                  </div>
+                </div>
+              </div>
 
-            <!-- 3. Users & Time Entries Preview -->
-            <div class="space-y-2">
-              <label class="text-xs font-bold text-slate-800">3. Fetched Time Entries to Import</label>
-              <div class="max-h-48 overflow-y-auto border border-slate-200 rounded">
-                <table class="w-full text-left text-[11px]">
-                  <thead class="bg-slate-50 text-slate-500 sticky top-0">
+              <!-- Filter Bar inside Preview (Matches JiraImportView.tsx) -->
+              <div class="flex flex-wrap items-center gap-2.5">
+                <input type="text" id="preview-filter-search" oninput="renderClockifyPreviewTable()" placeholder="Search description or project..." class="border border-slate-300 rounded px-3 py-1.5 text-xs w-56 focus:outline-none focus:border-emerald-600">
+
+                <select id="preview-filter-client" onchange="renderClockifyPreviewTable()" class="bg-white border border-slate-300 rounded px-3 py-1.5 text-xs text-slate-700">
+                  <option value="ALL">All Companies</option>
+                  <option value="Cambium">Cambium</option>
+                  <option value="Moby Filters">Moby Filters</option>
+                  <option value="Dollaride">Dollaride</option>
+                </select>
+
+                <select id="preview-filter-product" onchange="renderClockifyPreviewTable()" class="bg-white border border-slate-300 rounded px-3 py-1.5 text-xs text-slate-700">
+                  <option value="ALL">All Products</option>
+                  <option value="Accounting">Accounting</option>
+                  <option value="FP&A">FP&A</option>
+                </select>
+
+                <select id="preview-filter-user" onchange="renderClockifyPreviewTable()" class="bg-white border border-slate-300 rounded px-3 py-1.5 text-xs text-slate-700">
+                  <option value="ALL">All Assignees</option>
+                  <option value="Hassan">Hassan</option>
+                  <option value="Ahmed Raza">Ahmed Raza</option>
+                  <option value="Daim Ashraf">Daim Ashraf</option>
+                </select>
+
+                <button onclick="clearPreviewFilters()" class="text-xs text-emerald-700 hover:underline font-medium px-2">
+                  Clear Filters
+                </button>
+              </div>
+
+              <!-- Preview Table with Checkboxes -->
+              <div class="max-h-[420px] overflow-y-auto border border-slate-200 rounded">
+                <table class="w-full text-left text-xs">
+                  <thead class="bg-slate-50 text-slate-600 border-b border-slate-200 sticky top-0">
                     <tr>
-                      <th class="p-2">Date</th>
-                      <th class="p-2">User</th>
-                      <th class="p-2">Description</th>
-                      <th class="p-2 text-right">Duration</th>
+                      <th class="p-2.5 w-8 text-center">
+                        <input type="checkbox" id="preview-select-all" checked onchange="toggleAllPreviewRows(this.checked)" class="rounded text-emerald-600">
+                      </th>
+                      <th class="p-2.5">Date</th>
+                      <th class="p-2.5">Company</th>
+                      <th class="p-2.5">Mapped Project</th>
+                      <th class="p-2.5">Product</th>
+                      <th class="p-2.5">Time Entry Description</th>
+                      <th class="p-2.5">Assignee</th>
+                      <th class="p-2.5 text-right">Duration</th>
                     </tr>
                   </thead>
-                  <tbody id="import-preview-tbody" class="divide-y divide-slate-100">
-                    <tr>
-                      <td class="p-2 font-mono">10/18/2026</td>
-                      <td class="p-2 font-semibold">Hassan</td>
-                      <td class="p-2 text-slate-600">finalizing the bank reconciliation for this month...</td>
-                      <td class="p-2 text-right font-mono font-bold">06:00:00</td>
-                    </tr>
-                    <tr>
-                      <td class="p-2 font-mono">10/15/2026</td>
-                      <td class="p-2 font-semibold">Hassan</td>
-                      <td class="p-2 text-slate-600">Categorization of Bank statement of 4401</td>
-                      <td class="p-2 text-right font-mono font-bold">02:00:00</td>
-                    </tr>
-                    <tr>
-                      <td class="p-2 font-mono">10/15/2026</td>
-                      <td class="p-2 font-semibold">Ahmed Raza</td>
-                      <td class="p-2 text-slate-600">Discussion with Hassan.</td>
-                      <td class="p-2 text-right font-mono font-bold">00:20:00</td>
-                    </tr>
-                    <tr>
-                      <td class="p-2 font-mono">10/14/2026</td>
-                      <td class="p-2 font-semibold">Ahmed Raza</td>
-                      <td class="p-2 text-slate-600">Discussion with Hassan, Reviewing cambium's working file...</td>
-                      <td class="p-2 text-right font-mono font-bold">02:20:00</td>
-                    </tr>
-                    <tr>
-                      <td class="p-2 font-mono">10/13/2026</td>
-                      <td class="p-2 font-semibold">Hassan</td>
-                      <td class="p-2 text-slate-600">Record Prepaid entries for September and other previous month</td>
-                      <td class="p-2 text-right font-mono font-bold">07:00:00</td>
-                    </tr>
+                  <tbody id="clockify-preview-tbody" class="divide-y divide-slate-100">
+                    <!-- Populated dynamically by renderClockifyPreviewTable() -->
                   </tbody>
                 </table>
               </div>
+
             </div>
 
-            <!-- Execute Import Button -->
-            <div class="flex items-center justify-end space-x-3 pt-2">
-              <button onclick="executeClockifyBatchImport()" class="px-5 py-2.5 rounded text-xs font-bold uppercase tracking-wide bg-emerald-600 hover:bg-emerald-700 text-white shadow transition flex items-center space-x-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                <span>IMPORT INTO EP CENTRAL</span>
+            <!-- Bottom Action Buttons -->
+            <div class="flex items-center space-x-3">
+              <button onclick="setClockifyImportStep('mapping')" class="px-4 py-2 rounded border border-slate-300 hover:bg-slate-50 text-xs font-bold uppercase tracking-wide text-slate-700 transition">
+                ← BACK
+              </button>
+              <button onclick="setClockifyImportStep('done')" id="preview-import-btn" class="px-5 py-2 rounded bg-[#00D59B] hover:bg-[#00B98C] text-slate-900 text-xs font-bold uppercase tracking-wide shadow-sm transition">
+                IMPORT 11 ENTRIES
               </button>
             </div>
 
+          </div>
+
+          <!-- ================================================================= -->
+          <!-- STEP 4 SCREEN: IMPORT COMPLETE (`done` — Separate Screen)         -->
+          <!-- ================================================================= -->
+          <div id="clockify-step-done" class="hidden">
+            <div class="bg-white border border-slate-200 rounded-md p-6 shadow-sm space-y-4">
+              <div class="flex items-center space-x-2">
+                <svg class="w-6 h-6 text-[#2E7D32]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                <h2 class="text-lg font-bold text-slate-900">Import Complete</h2>
+              </div>
+
+              <div class="space-y-1.5 text-xs text-slate-700">
+                <div>Companies matched: <strong id="done-companies-count">4</strong></div>
+                <div>Projects mapped / created: <strong id="done-projects-count">4</strong></div>
+                <div>
+                  Time logs imported:
+                  <button onclick="navigateTo('clockify-reports')" id="done-entries-count" class="font-bold text-emerald-700 hover:underline ml-1">11 entries (38:25:00)</button>
+                </div>
+                <div>Entries skipped: <strong>0</strong></div>
+              </div>
+
+              <div class="pt-2 flex items-center space-x-3">
+                <button onclick="setClockifyImportStep('select')" class="px-4 py-2 rounded border border-slate-300 hover:bg-slate-50 text-xs font-bold uppercase tracking-wide text-slate-700 transition">
+                  IMPORT ANOTHER BATCH
+                </button>
+                <button onclick="navigateTo('clockify-reports')" class="px-4 py-2 rounded bg-[#00D59B] hover:bg-[#00B98C] text-slate-900 text-xs font-bold uppercase tracking-wide shadow-sm transition">
+                  VIEW IN CLOCKIFY REPORTS →
+                </button>
+              </div>
+            </div>
           </div>
 
         </div>
@@ -1423,8 +1638,65 @@
     }
 
     // =========================================================================
-    // CLOCKIFY IMPORT PAGE LOGIC (Settings > Clockify Integration)
+    // CLOCKIFY IMPORT WIZARD (Multi-Screen Jira-Style Flow: select -> mapping -> preview -> done)
     // =========================================================================
+    let currentClockifyStep = 'select';
+    let selectedPreviewIds = new Set(clockifyReportEntries.map(e => e.id));
+
+    function setClockifyImportStep(step) {
+      currentClockifyStep = step;
+      const steps = ['select', 'mapping', 'preview', 'done'];
+      steps.forEach(s => {
+        const el = document.getElementById('clockify-step-' + s);
+        if (el) el.classList.toggle('hidden', s !== step);
+      });
+
+      // Expand container width on 'preview' step just like JiraImportView.tsx (maxWidth={step === 'preview' ? 'xl' : 'md'})
+      const container = document.getElementById('clockify-import-container');
+      if (container) {
+        if (step === 'preview') {
+          container.classList.remove('max-w-3xl');
+          container.classList.add('max-w-6xl');
+        } else {
+          container.classList.remove('max-w-6xl');
+          container.classList.add('max-w-3xl');
+        }
+      }
+
+      // Render Step Breadcrumbs (Matches JiraImportView.tsx lines 913-954)
+      const bc = document.getElementById('clockify-step-breadcrumbs');
+      if (bc) {
+        if (step === 'done') {
+          bc.classList.add('hidden');
+        } else {
+          bc.classList.remove('hidden');
+          const order = ['select', 'mapping', 'preview'];
+          const labels = {
+            select: 'Select Workspace',
+            mapping: 'Map Fields',
+            preview: 'Preview & Confirm'
+          };
+          const idx = order.indexOf(step);
+          const parts = order.slice(0, idx + 1).map((s, i) => {
+            const isCurrent = i === idx;
+            if (isCurrent) {
+              return `<span class="font-bold text-slate-900">${labels[s]}</span>`;
+            }
+            return `<button onclick="setClockifyImportStep('${s}')" class="text-slate-500 hover:text-slate-900 hover:underline">${labels[s]}</button>`;
+          });
+          bc.innerHTML = parts.join('<span class="text-slate-400 px-1">›</span>');
+        }
+      }
+
+      if (step === 'preview') {
+        renderClockifyPreviewTable();
+      }
+
+      // Scroll main content area back to top so each step feels like a fresh screen
+      const mainEl = document.querySelector('main');
+      if (mainEl) mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
     function handleImportTimeRangeChange() {
       const val = document.getElementById('import-time-range').value;
       const customBox = document.getElementById('import-custom-dates');
@@ -1441,43 +1713,149 @@
       const uBox = document.getElementById('batch-filter-user');
       const pBox = document.getElementById('batch-filter-project');
 
-      cBox.classList.remove('opacity-40');
-      uBox.classList.remove('opacity-40');
-      pBox.classList.remove('opacity-40');
+      cBox.classList.add('hidden');
+      uBox.classList.add('hidden');
+      pBox.classList.add('hidden');
 
-      if (scope === 'all') {
-        document.getElementById('import-client-select').value = 'ALL';
-        document.getElementById('import-user-select').value = 'ALL';
-        document.getElementById('import-project-select').value = 'ALL';
+      if (scope === 'client') {
+        cBox.classList.remove('hidden');
       } else if (scope === 'user') {
-        document.getElementById('import-user-select').value = 'Hassan';
-      } else if (scope === 'client') {
-        document.getElementById('import-client-select').value = 'Cambium';
+        uBox.classList.remove('hidden');
       } else if (scope === 'project') {
-        document.getElementById('import-project-select').value = 'Understanding system/Correcting EP mistake';
+        pBox.classList.remove('hidden');
       }
     }
 
     function fetchAndPrepareClockify() {
-      const client = document.getElementById('import-client-select').value;
-      const user = document.getElementById('import-user-select').value;
-      const timeSelect = document.getElementById('import-time-range');
-      const timeLabel = timeSelect.options[timeSelect.selectedIndex].text;
+      const scope = document.getElementById('import-scope-mode').value;
+      const previewClient = document.getElementById('preview-filter-client');
+      const previewUser = document.getElementById('preview-filter-user');
 
-      document.getElementById('mapped-client-name').textContent = client === 'ALL' ? 'Cambium, Moby Filters, Dollaride' : client;
-      document.getElementById('prepared-summary-subtitle').innerHTML =
-        `Showing fetched records for Client: <strong>${client}</strong> • User: <strong>${user}</strong> • Period: <strong>${timeLabel}</strong>`;
+      // Reset preview filters based on Step 1 selection
+      if (previewClient) previewClient.value = 'ALL';
+      if (previewUser) previewUser.value = 'ALL';
 
-      const panel = document.getElementById('prepared-import-panel');
-      panel.classList.remove('hidden');
-      panel.scrollIntoView({ behavior: 'smooth' });
+      if (scope === 'client') {
+        const chosenClient = document.getElementById('import-client-select').value;
+        if (previewClient && chosenClient !== 'ALL') previewClient.value = chosenClient;
+      } else if (scope === 'user') {
+        const chosenUser = document.getElementById('import-user-select').value;
+        if (previewUser && chosenUser !== 'ALL') previewUser.value = chosenUser;
+      }
+
+      // Navigate to Step 2 ('mapping') as a separate screen
+      setClockifyImportStep('mapping');
     }
 
-    function executeClockifyBatchImport() {
-      const client = document.getElementById('import-client-select').value;
-      const user = document.getElementById('import-user-select').value;
-      alert(`Batch Import Successful!\n\n• Client: ${client} mapped to existing EP Company\n• User filter: ${user}\n• Time entries imported into EP Central.`);
-      navigateTo('clockify-reports');
+    function syncDefaultProductMapping(productVal) {
+      document.querySelectorAll('.project-product-select').forEach(sel => {
+        sel.value = productVal;
+      });
+    }
+
+    function getFilteredPreviewEntries() {
+      const search = (document.getElementById('preview-filter-search')?.value || '').trim().toLowerCase();
+      const client = document.getElementById('preview-filter-client')?.value || 'ALL';
+      const product = document.getElementById('preview-filter-product')?.value || 'ALL';
+      const user = document.getElementById('preview-filter-user')?.value || 'ALL';
+
+      return clockifyReportEntries.filter(e => {
+        if (client !== 'ALL' && e.client !== client) return false;
+        if (product !== 'ALL' && e.product !== product) return false;
+        if (user !== 'ALL' && e.user !== user) return false;
+        if (search && !e.description.toLowerCase().includes(search) && !e.project.toLowerCase().includes(search)) return false;
+        return true;
+      });
+    }
+
+    function renderClockifyPreviewTable() {
+      const filtered = getFilteredPreviewEntries();
+      const tbody = document.getElementById('clockify-preview-tbody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      let activeSelectedCount = 0;
+      let activeTotalSec = 0;
+      const uniqueProjects = new Set();
+      const uniqueCompanies = new Set();
+
+      filtered.forEach(e => {
+        const isChecked = selectedPreviewIds.has(e.id);
+        if (isChecked) {
+          activeSelectedCount++;
+          activeTotalSec += e.durationSec;
+          uniqueProjects.add(e.project);
+          uniqueCompanies.add(e.client);
+        }
+
+        const tr = document.createElement('tr');
+        tr.className = isChecked ? 'hover:bg-slate-50 transition' : 'opacity-50 bg-slate-50/50';
+        const prodBadge = e.product === 'Accounting'
+          ? '<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">Accounting</span>'
+          : '<span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-bold text-[10px]">FP&A</span>';
+
+        tr.innerHTML = `
+          <td class="p-2.5 text-center">
+            <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="togglePreviewRow('${e.id}', this.checked)" class="rounded text-emerald-600">
+          </td>
+          <td class="p-2.5 font-mono text-slate-600">${e.date}</td>
+          <td class="p-2.5 font-semibold text-slate-800">${e.client}</td>
+          <td class="p-2.5 text-slate-700">${e.project}</td>
+          <td class="p-2.5">${prodBadge}</td>
+          <td class="p-2.5 text-slate-600 max-w-xs truncate" title="${e.description}">${e.description}</td>
+          <td class="p-2.5 text-slate-700">${e.user}</td>
+          <td class="p-2.5 text-right font-mono font-bold text-slate-900">${e.durationStr}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      const totalStr = formatSecToHMS(activeTotalSec);
+      const countLabel = document.getElementById('preview-selected-count-label');
+      if (countLabel) {
+        countLabel.textContent = `${activeSelectedCount} of ${clockifyReportEntries.length} selected (${filtered.length} shown)`;
+      }
+
+      const bannerSummary = document.getElementById('preview-banner-summary');
+      if (bannerSummary) {
+        bannerSummary.textContent = `Importing ${activeSelectedCount} time entries across ${uniqueProjects.size} mapped project(s) (Total: ${totalStr})`;
+      }
+
+      const importBtn = document.getElementById('preview-import-btn');
+      if (importBtn) {
+        importBtn.textContent = `IMPORT ${activeSelectedCount} ${activeSelectedCount === 1 ? 'ENTRY' : 'ENTRIES'}`;
+        importBtn.disabled = activeSelectedCount === 0;
+      }
+
+      // Sync Done screen counters
+      const doneComp = document.getElementById('done-companies-count');
+      const doneProj = document.getElementById('done-projects-count');
+      const doneEntries = document.getElementById('done-entries-count');
+      if (doneComp) doneComp.textContent = String(uniqueCompanies.size || 1);
+      if (doneProj) doneProj.textContent = String(uniqueProjects.size || 1);
+      if (doneEntries) doneEntries.textContent = `${activeSelectedCount} entries (${totalStr})`;
+    }
+
+    function togglePreviewRow(id, checked) {
+      if (checked) selectedPreviewIds.add(id);
+      else selectedPreviewIds.delete(id);
+      renderClockifyPreviewTable();
+    }
+
+    function toggleAllPreviewRows(checked) {
+      const filtered = getFilteredPreviewEntries();
+      filtered.forEach(e => {
+        if (checked) selectedPreviewIds.add(e.id);
+        else selectedPreviewIds.delete(e.id);
+      });
+      renderClockifyPreviewTable();
+    }
+
+    function clearPreviewFilters() {
+      document.getElementById('preview-filter-search').value = '';
+      document.getElementById('preview-filter-client').value = 'ALL';
+      document.getElementById('preview-filter-product').value = 'ALL';
+      document.getElementById('preview-filter-user').value = 'ALL';
+      renderClockifyPreviewTable();
     }
 
     // =========================================================================
@@ -1714,6 +2092,7 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
+      setClockifyImportStep('select');
       applyReportFilters();
       renderTaskEntries();
     });
