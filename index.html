@@ -1473,36 +1473,107 @@
       </section>
 
       <!-- ===================================================================== -->
-      <!-- VIEW 4: CLOCKIFY EXECUTIVE DASHBOARD                                  -->
+      <!-- VIEW 4: CLOCKIFY DASHBOARD (Exact Match to app.clockify.me/dashboard) -->
       <!-- ===================================================================== -->
-      <section id="view-clockify-dashboard" class="view-panel hidden flex-1 p-6 space-y-6 max-w-[1600px] mx-auto w-full bg-slate-50">
-        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
-          <div>
-            <div class="text-xs text-slate-500 font-medium">Clockify / <span class="text-slate-800 font-semibold">Dashboard</span></div>
-            <h1 class="text-2xl font-bold text-slate-900">Executive Time &amp; Product Analytics</h1>
+      <section id="view-clockify-dashboard" class="view-panel hidden flex-1 p-6 space-y-5 max-w-[1600px] mx-auto w-full bg-[#F2F6F8] overflow-y-auto">
+        
+        <!-- Top Header Row: "Dashboard" on left, [Project ▾] [Team ▾] [📅 This week < >] on right -->
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <h1 class="text-xl font-normal text-slate-600">Dashboard</h1>
+
+          <div class="flex flex-wrap items-center gap-2.5 text-xs">
+            <select id="dash-group-mode" onchange="renderClockifyDashboard()" class="bg-white border border-slate-300 rounded px-3 py-2 text-slate-700 font-medium shadow-2xs focus:outline-none cursor-pointer">
+              <option value="project" selected>Project</option>
+              <option value="billability">Billability</option>
+            </select>
+
+            <select id="dash-team-mode" onchange="renderClockifyDashboard()" class="bg-white border border-slate-300 rounded px-3 py-2 text-slate-700 font-medium shadow-2xs focus:outline-none cursor-pointer">
+              <option value="team" selected>Team</option>
+              <option value="me">Only me</option>
+            </select>
+
+            <div class="flex items-center bg-white border border-slate-300 rounded shadow-2xs">
+              <div class="flex items-center space-x-2 px-3 py-2 border-r border-slate-200 min-w-[165px]">
+                <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                <select id="dash-date-range" onchange="renderClockifyDashboard()" class="bg-transparent text-slate-700 font-medium focus:outline-none w-full cursor-pointer">
+                  <option value="this_week" selected>This week</option>
+                  <option value="last_week">Last week</option>
+                  <option value="this_month">This month</option>
+                </select>
+              </div>
+              <button onclick="renderClockifyDashboard()" class="px-2.5 py-2 text-slate-400 hover:text-slate-700 hover:bg-slate-50 border-r border-slate-200">‹</button>
+              <button onclick="renderClockifyDashboard()" class="px-2.5 py-2 text-slate-400 hover:text-slate-700 hover:bg-slate-50">›</button>
+            </div>
           </div>
-          <button onclick="navigateTo('clockify-reports')" class="px-4 py-2 text-xs font-bold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 shadow-sm">
-            Open Reports &amp; Export →
-          </button>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
-          <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-            <div class="text-xs text-slate-500 font-semibold uppercase">Total Hours</div>
-            <div class="text-2xl font-extrabold text-slate-900 mt-1 font-mono">695:14:50</div>
+        <!-- Unified Dashboard Card -->
+        <div class="bg-white border border-slate-200 rounded shadow-xs overflow-hidden">
+          
+          <!-- 1. Top 3-Column Grey Summary Strip (Total time | Top Project | Top Client) -->
+          <div class="bg-[#E4EAEE] border-b border-slate-200 grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-300/60 py-5 px-4 text-center">
+            <div class="py-1">
+              <div class="text-[11px] text-slate-400 mb-1">Total time</div>
+              <div id="dash-kpi-total" class="text-2xl font-normal text-slate-800 tracking-tight">1,013:35:44</div>
+            </div>
+            <div class="py-1">
+              <div class="text-[11px] text-slate-400 mb-1">Top Project</div>
+              <div id="dash-kpi-top-project" class="text-xl font-normal text-slate-800">Enduring Planet - Accounting</div>
+            </div>
+            <div class="py-1">
+              <div class="text-[11px] text-slate-400 mb-1">Top Client</div>
+              <div id="dash-kpi-top-client" class="text-xl font-normal text-slate-800">B&amp;A Retainer Services</div>
+            </div>
           </div>
-          <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-            <div class="text-xs text-slate-500 font-semibold uppercase">Accounting Product</div>
-            <div class="text-2xl font-extrabold text-emerald-600 mt-1 font-mono">482:30:00</div>
+
+          <!-- 2. Middle 7-Day Multi-Color Stacked Vertical Bar Chart -->
+          <div class="p-6">
+            <div class="relative pt-4 pb-2 pl-14 pr-2">
+              <!-- Y-Axis Ticks & Horizontal Grid Lines -->
+              <div id="dash-chart-yaxis" class="absolute inset-x-0 top-4 bottom-8 flex flex-col justify-between pointer-events-none">
+                <!-- Populated dynamically by renderClockifyDashboard() -->
+              </div>
+
+              <!-- 7 Stacked Bars Row -->
+              <div id="dash-chart-bars" class="relative z-10 h-72 grid grid-cols-7 gap-4 sm:gap-8 items-end pt-6 border-b border-slate-200">
+                <!-- Populated dynamically by renderClockifyDashboard() -->
+              </div>
+
+              <!-- X-Axis Day Labels -->
+              <div id="dash-chart-xaxis" class="grid grid-cols-7 gap-4 sm:gap-8 pt-2.5 text-center text-[11px] text-slate-500">
+                <div>Mon, Oct 19</div>
+                <div>Tue, Oct 20</div>
+                <div>Wed, Oct 21</div>
+                <div>Thu, Oct 22</div>
+                <div>Fri, Oct 23</div>
+                <div>Sat, Oct 24</div>
+                <div>Sun, Oct 25</div>
+              </div>
+            </div>
           </div>
-          <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-            <div class="text-xs text-slate-500 font-semibold uppercase">FP&amp;A Product</div>
-            <div class="text-2xl font-extrabold text-blue-600 mt-1 font-mono">212:44:50</div>
+
+          <!-- 3. Bottom Split: Left Multi-Segment Donut Chart + Right Project Horizontal Bar List -->
+          <div class="border-t border-slate-200 px-6 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            
+            <!-- Left: Multi-Segment Donut Chart -->
+            <div class="lg:col-span-5 flex items-center justify-center">
+              <div class="relative w-60 h-60">
+                <svg id="dash-donut-svg" viewBox="0 0 42 42" class="w-full h-full -rotate-90">
+                  <!-- Populated dynamically by renderClockifyDashboard() -->
+                </svg>
+                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <span id="dash-donut-total" class="text-base font-normal text-slate-800">1,013:35:44</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Project Breakdown List with Horizontal Bars & Percentages -->
+            <div id="dash-project-breakdown" class="lg:col-span-7 space-y-3.5 text-xs">
+              <!-- Populated dynamically by renderClockifyDashboard() -->
+            </div>
+
           </div>
-          <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-            <div class="text-xs text-slate-500 font-semibold uppercase">Active Clients</div>
-            <div class="text-2xl font-extrabold text-slate-900 mt-1 font-mono">12</div>
-          </div>
+
         </div>
       </section>
 
@@ -2230,6 +2301,8 @@
 
       if (viewId === 'clockify-reports') {
         applyReportFilters();
+      } else if (viewId === 'clockify-dashboard') {
+        renderClockifyDashboard();
       }
     }
 
@@ -2926,9 +2999,155 @@
       renderTaskEntries();
     }
 
+    // =========================================================================
+    // CLOCKIFY DASHBOARD (Exact Match to app.clockify.me/dashboard Screenshot)
+    // =========================================================================
+    const dashboardStripePalette = [
+      '#00897B', '#3949AB', '#039BE5', '#D81B60', '#43A047', '#1E88E5',
+      '#8E24AA', '#00ACC1', '#F4511E', '#7CB342', '#5C6BC0', '#00897B',
+      '#E91E63', '#0288D1', '#26A69A', '#5E35B1', '#4CAF50', '#1976D2',
+      '#EC407A', '#009688', '#3F51B5', '#03A9F4', '#66BB6A', '#AB47BC'
+    ];
+
+    function buildStackedBarSegmentsHtml(yellowBasePct, stripeCount) {
+      if (yellowBasePct === 0 && stripeCount === 0) return '';
+      const remainingPct = Math.max(0, 100 - yellowBasePct);
+      const eachStripePct = stripeCount > 0 ? remainingPct / stripeCount : 0;
+      const stripes = [];
+      for (let i = 0; i < stripeCount; i++) {
+        const color = dashboardStripePalette[i % dashboardStripePalette.length];
+        stripes.push(`<div class="w-full" style="height: ${eachStripePct.toFixed(2)}%; background-color: ${color};"></div>`);
+      }
+      // Yellow base at the bottom (`flex-col` top-to-bottom means stripes first, yellow base last)
+      stripes.push(`<div class="w-full" style="height: ${yellowBasePct}%; background-color: #FFC107;"></div>`);
+      return stripes.join('');
+    }
+
+    function renderClockifyDashboard() {
+      const teamMode = document.getElementById('dash-team-mode')?.value || 'team';
+      const dateRange = document.getElementById('dash-date-range')?.value || 'this_week';
+
+      const kpiTotalEl = document.getElementById('dash-kpi-total');
+      const kpiTopProjEl = document.getElementById('dash-kpi-top-project');
+      const kpiTopClientEl = document.getElementById('dash-kpi-top-client');
+      const yAxisEl = document.getElementById('dash-chart-yaxis');
+      const barsEl = document.getElementById('dash-chart-bars');
+      const donutSvg = document.getElementById('dash-donut-svg');
+      const donutTotalEl = document.getElementById('dash-donut-total');
+      const breakdownEl = document.getElementById('dash-project-breakdown');
+
+      if (!yAxisEl || !barsEl || !donutSvg || !breakdownEl) return;
+
+      const isOnlyMe = teamMode === 'me';
+      const totalLabel = isOnlyMe
+        ? '38:25:00'
+        : dateRange === 'last_week'
+          ? '1,850:01:01'
+          : '1,013:35:44';
+
+      kpiTotalEl.textContent = totalLabel;
+      donutTotalEl.textContent = totalLabel;
+      kpiTopProjEl.textContent = isOnlyMe ? 'Moby Filters - Monthly Close' : 'Enduring Planet - Accounting';
+      kpiTopClientEl.textContent = isOnlyMe ? 'Moby Filters Inc' : 'B&A Retainer Services';
+
+      // 1. Y-Axis Ticks (400.0h down to 50.0h matching screenshot)
+      const yTicks = isOnlyMe
+        ? ['10.0h', '8.5h', '7.0h', '5.5h', '4.0h', '2.5h', '1.0h']
+        : ['400.0h', '350.0h', '300.0h', '250.0h', '200.0h', '150.0h', '100.0h', '50.0h'];
+
+      yAxisEl.innerHTML = yTicks.map(t => `
+        <div class="flex items-center w-full">
+          <span class="w-12 pr-2 text-right text-[10px] text-slate-400 font-mono">${t}</span>
+          <div class="flex-1 border-b border-slate-100"></div>
+        </div>
+      `).join('');
+
+      // 2. 7-Day Multi-Color Stacked Vertical Bars (Matching Mon Oct 19 - Sun Oct 25 screenshot)
+      const dailyData = isOnlyMe
+        ? [
+            { label: '08:15:00', heightPct: 82.5, yellowBasePct: 45, stripes: 4 },
+            { label: '07:45:00', heightPct: 77.5, yellowBasePct: 40, stripes: 4 },
+            { label: '09:10:00', heightPct: 91.6, yellowBasePct: 50, stripes: 5 },
+            { label: '06:45:00', heightPct: 67.5, yellowBasePct: 38, stripes: 3 },
+            { label: '06:30:00', heightPct: 65.0, yellowBasePct: 42, stripes: 3 },
+            { label: '00:00:00', heightPct: 0,    yellowBasePct: 0,  stripes: 0 },
+            { label: '00:00:00', heightPct: 0,    yellowBasePct: 0,  stripes: 0 }
+          ]
+        : [
+            { label: '358:48:16', heightPct: 89.7, yellowBasePct: 19, stripes: 28 },
+            { label: '335:15:53', heightPct: 83.8, yellowBasePct: 27, stripes: 26 },
+            { label: '233:20:49', heightPct: 58.3, yellowBasePct: 23, stripes: 22 },
+            { label: '70:20:46',  heightPct: 17.6, yellowBasePct: 30, stripes: 8  },
+            { label: '15:50:00',  heightPct: 4.2,  yellowBasePct: 35, stripes: 4  },
+            { label: '00:00:00',  heightPct: 0,    yellowBasePct: 0,  stripes: 0  },
+            { label: '00:00:00',  heightPct: 0,    yellowBasePct: 0,  stripes: 0  }
+          ];
+
+      barsEl.innerHTML = dailyData.map(d => `
+        <div class="flex flex-col items-center justify-end h-full">
+          <span class="text-[11px] font-mono text-slate-600 mb-1.5">${d.label}</span>
+          ${d.heightPct > 0
+            ? `<div class="w-full max-w-[110px] flex flex-col overflow-hidden shadow-2xs" style="height: ${d.heightPct}%">
+                 ${buildStackedBarSegmentsHtml(d.yellowBasePct, d.stripes)}
+               </div>`
+            : `<div class="w-full max-w-[110px] h-0"></div>`
+          }
+        </div>
+      `).join('');
+
+      // 3. Multi-Segment Donut Chart (Left) & Project Horizontal Bar Breakdown (Right)
+      const donutSlices = [
+        { color: '#FFC107', pct: 46.5 },
+        { color: '#1565C0', pct: 6.2 },
+        { color: '#00897B', pct: 7.4 },
+        { color: '#00ACC1', pct: 7.0 },
+        { color: '#039BE5', pct: 6.5 },
+        { color: '#D81B60', pct: 5.8 },
+        { color: '#3949AB', pct: 5.6 },
+        { color: '#43A047', pct: 5.4 },
+        { color: '#7CB342', pct: 5.0 },
+        { color: '#1E88E5', pct: 4.6 }
+      ];
+
+      let cumulative = 0;
+      donutSvg.innerHTML = donutSlices.map(s => {
+        // Leave a tiny 0.45 gap between slices so white separators appear just like Clockify
+        const visiblePct = Math.max(0.2, s.pct - 0.45);
+        const dashArray = `${visiblePct} ${100 - visiblePct}`;
+        const dashOffset = 100 - cumulative;
+        cumulative += s.pct;
+        return `<circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="${s.color}" stroke-width="7.2" stroke-dasharray="${dashArray}" stroke-dashoffset="${dashOffset}"></circle>`;
+      }).join('');
+
+      const breakdownRows = [
+        { client: 'Enduring Planet - Accounting', project: '', duration: '235:17:48', pctNum: 23.21, pctStr: '23,21%', color: '#FFC107' },
+        { client: 'Nodl Advisors', project: 'FP&A Retainer Services', duration: '32:30:00', pctNum: 3.21, pctStr: '3,21%', color: '#5C6BC0' },
+        { client: 'Bedrock Energy', project: 'B&A Retainer Services', duration: '27:43:46', pctNum: 2.74, pctStr: '2,74%', color: '#00897B' },
+        { client: 'USGBC', project: 'B&A Retainer Services', duration: '24:15:00', pctNum: 2.39, pctStr: '2,39%', color: '#039BE5' },
+        { client: 'Cambium', project: 'Understanding system/Correcting EP mistake', duration: '21:20:00', pctNum: 2.10, pctStr: '2,10%', color: '#00897B' },
+        { client: 'Elephant Energy', project: 'B&A Retainer Services', duration: '19:09:00', pctNum: 1.89, pctStr: '1,89%', color: '#D81B60' },
+        { client: 'Dollaride', project: 'Cash Budget', duration: '19:00:00', pctNum: 1.87, pctStr: '1,87%', color: '#1E88E5' }
+      ];
+
+      breakdownEl.innerHTML = breakdownRows.map(r => `
+        <div class="grid grid-cols-12 items-center gap-3">
+          <div class="col-span-6 text-right truncate">
+            <span class="font-medium text-slate-800">${r.client}</span>
+            ${r.project ? `<span class="text-slate-400"> - ${r.project}</span>` : ''}
+          </div>
+          <div class="col-span-2 text-right font-mono text-slate-700">${r.duration}</div>
+          <div class="col-span-3 h-5 bg-[#ECEFF1] rounded-xs overflow-hidden flex items-center">
+            <div class="h-full transition-all" style="width: ${Math.max(2, r.pctNum)}%; background-color: ${r.color};"></div>
+          </div>
+          <div class="col-span-1 text-right text-slate-400 font-mono text-[11px]">${r.pctStr}</div>
+        </div>
+      `).join('');
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       setClockifyImportStep('select');
       applyReportFilters();
+      renderClockifyDashboard();
       renderTaskEntries();
     });
   </script>
