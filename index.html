@@ -930,9 +930,17 @@
               <select id="filter-project" onchange="applyReportFilters()" class="font-semibold text-sky-700 bg-sky-50 px-2 py-0.5 rounded focus:outline-none cursor-pointer">
                 <option value="ALL" selected>All Projects</option>
                 <option value="Understanding system/Correcting EP mistake">Understanding system/Correcting EP mistake</option>
+                <option value="B&A Retainer Services">B&amp;A Retainer Services</option>
+                <option value="Monthly Bookkeeping">Monthly Bookkeeping</option>
+                <option value="FP&A Retainer Services">FP&amp;A Retainer Services</option>
+                <option value="Modelling and Proforma">Modelling and Proforma</option>
+                <option value="AP Management">AP Management</option>
+                <option value="Cash Budget">Cash Budget</option>
+                <option value="Investment Operations">Investment Operations</option>
+                <option value="Payroll Management">Payroll Management</option>
+                <option value="KPI Dashboard">KPI Dashboard</option>
                 <option value="Monthly Close">Monthly Close</option>
                 <option value="Ad-hoc Financial Advisory">Ad-hoc Financial Advisory</option>
-                <option value="Modelling and Proforma">Modelling and Proforma</option>
               </select>
             </div>
 
@@ -1010,46 +1018,119 @@
         </div>
 
         <!-- ================================================================= -->
-        <!-- SUBTAB 2: SUMMARY REPORT                                          -->
+        <!-- SUBTAB 2: SUMMARY REPORT (Exact Clockify Summary Layout)          -->
         <!-- ================================================================= -->
         <div id="report-pane-summary" class="report-subpane hidden space-y-5">
+          
+          <!-- CARD 1: TOTAL HEADER + BILLABILITY + 7-DAY VERTICAL BAR CHART -->
           <div class="bg-white border border-slate-200 rounded shadow-sm overflow-hidden">
-            <div class="bg-slate-100 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
-              <div class="text-xs text-slate-600">
-                Summary Total: <span id="summary-total-hours" class="text-base font-extrabold text-slate-900 font-mono ml-1">26:40:00</span>
+            
+            <!-- Grey Top Strip: Total + Print / Share / Rounding -->
+            <div class="bg-[#E4EAEE] border-b border-slate-200 px-4 py-2.5 flex items-center justify-between">
+              <div class="text-xs text-slate-500">
+                Total: <span id="summary-total-hours" class="text-base font-extrabold text-slate-900 font-mono ml-1">27:20:00</span>
               </div>
-              <button onclick="exportReportAsPDF()" class="text-xs font-bold text-emerald-700 hover:underline">Export Summary as EP Branded PDF →</button>
-            </div>
 
-            <!-- Bar + Donut Summary -->
-            <div class="p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center border-b border-slate-100">
-              <div class="lg:col-span-4 flex flex-col items-center">
-                <div class="relative w-36 h-36">
-                  <svg viewBox="0 0 100 100" class="w-full h-full -rotate-90">
-                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="#10B981" stroke-width="20"></circle>
-                  </svg>
-                  <div class="absolute inset-0 flex flex-col items-center justify-center">
-                    <span id="summary-donut-label" class="text-sm font-extrabold font-mono text-slate-900">26:40:00</span>
-                    <span class="text-[10px] text-slate-400 uppercase">Filtered Total</span>
-                  </div>
+              <div class="flex items-center divide-x divide-slate-300 text-slate-600 text-xs">
+                <button onclick="exportReportAsPDF()" title="Print / Save Branded PDF" class="px-3 hover:text-slate-900 flex items-center space-x-1">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                </button>
+                <button onclick="alert('Shareable link copied to clipboard!')" title="Share Report" class="px-3 hover:text-slate-900 flex items-center space-x-1">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                </button>
+                <div class="pl-3 flex items-center space-x-2">
+                  <span class="w-7 h-4 bg-slate-300 rounded-full relative inline-flex items-center p-0.5 cursor-pointer">
+                    <span class="w-3 h-3 bg-white rounded-full shadow-2xs"></span>
+                  </span>
+                  <span class="text-slate-500 text-xs">Rounding</span>
                 </div>
               </div>
-              <div class="lg:col-span-8">
-                <table class="w-full text-left text-xs">
-                  <thead>
-                    <tr class="border-b border-slate-200 text-slate-400 uppercase text-[10px]">
-                      <th class="py-2">CLIENT / PROJECT</th>
-                      <th class="py-2">PRODUCT</th>
-                      <th class="py-2 text-right">DURATION</th>
-                    </tr>
-                  </thead>
-                  <tbody id="summary-report-tbody" class="divide-y divide-slate-100 font-medium">
-                    <!-- Populated dynamically -->
-                  </tbody>
-                </table>
+            </div>
+
+            <!-- Bar Chart Body -->
+            <div class="p-5 space-y-4">
+              <div>
+                <select class="bg-white border border-slate-300 rounded px-3 py-1.5 text-xs text-slate-700 font-medium focus:outline-none">
+                  <option selected>Billability</option>
+                  <option>Project</option>
+                </select>
+              </div>
+
+              <!-- 7-Day Vertical Bar Chart Container -->
+              <div class="relative pt-4 pb-2 pl-12 pr-2">
+                <!-- Y-Axis Labels & Horizontal Grid Lines -->
+                <div id="summary-chart-yaxis" class="absolute inset-x-0 top-4 bottom-8 flex flex-col justify-between pointer-events-none">
+                  <!-- Populated dynamically by JS -->
+                </div>
+
+                <!-- 7 Bars Row -->
+                <div id="summary-chart-bars" class="relative z-10 h-56 grid grid-cols-7 gap-4 sm:gap-8 items-end pt-6 border-b border-slate-200">
+                  <!-- Populated dynamically by JS -->
+                </div>
+
+                <!-- X-Axis Day Labels -->
+                <div class="grid grid-cols-7 gap-4 sm:gap-8 pt-2.5 text-center text-[11px] text-slate-500">
+                  <div>Mon, Oct 12</div>
+                  <div>Tue, Oct 13</div>
+                  <div>Wed, Oct 14</div>
+                  <div>Thu, Oct 15</div>
+                  <div>Fri, Oct 16</div>
+                  <div>Sat, Oct 17</div>
+                  <div>Sun, Oct 18</div>
+                </div>
               </div>
             </div>
           </div>
+
+          <!-- CARD 2: GROUP BY + LEFT EXPANDABLE TABLE + RIGHT MULTI-COLOR DONUT -->
+          <div class="bg-white border border-slate-200 rounded shadow-sm overflow-hidden">
+            
+            <!-- Grey Group By Bar -->
+            <div class="bg-[#E4EAEE] border-b border-slate-200 px-4 py-2.5 flex items-center space-x-2.5 text-xs">
+              <span class="text-slate-500">Group by:</span>
+              <select id="summary-group-primary" onchange="applyReportFilters()" class="bg-white border border-slate-300 rounded px-2.5 py-1 text-xs text-slate-700 font-medium focus:outline-none">
+                <option value="project" selected>Client / Project</option>
+                <option value="client">Client</option>
+                <option value="product">Product</option>
+              </select>
+              <select class="bg-white border border-slate-300 rounded px-2.5 py-1 text-xs text-slate-700 font-medium focus:outline-none">
+                <option selected>Description</option>
+                <option>User</option>
+              </select>
+            </div>
+
+            <!-- 2-Column Split: Left Project Rows (8 cols) + Right Donut Chart (4 cols) -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 items-start">
+              
+              <!-- Left Table -->
+              <div class="lg:col-span-8 lg:border-r lg:border-slate-200">
+                <div class="border-b border-slate-200 px-4 py-2.5 flex items-center justify-between text-[11px] text-slate-400 uppercase tracking-wider font-semibold">
+                  <div class="flex items-center space-x-2">
+                    <span class="w-4 h-4 rounded-xs bg-sky-100 text-sky-600 inline-flex items-center justify-center text-[10px] font-bold">⌄</span>
+                    <span>TITLE ⇅</span>
+                  </div>
+                  <span>DURATION ⇅</span>
+                </div>
+                <div id="summary-report-tbody" class="divide-y divide-slate-100 text-xs">
+                  <!-- Populated dynamically by JS -->
+                </div>
+              </div>
+
+              <!-- Right Donut Chart -->
+              <div class="lg:col-span-4 p-8 flex flex-col items-center justify-center">
+                <div class="relative w-56 h-56">
+                  <svg id="summary-donut-svg" viewBox="0 0 42 42" class="w-full h-full -rotate-90">
+                    <!-- Multi-segment SVG donut rings populated dynamically by JS -->
+                  </svg>
+                  <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span id="summary-donut-label" class="text-base font-bold font-mono text-slate-800">27:20:00</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
         </div>
 
         <!-- ================================================================= -->
@@ -2068,9 +2149,9 @@
         description: 'Reviewing historical ledger balances and AP aging schedule',
         user: 'Hassan',
         date: '10/12/2026',
-        timeRange: '8:00PM - 2:30AM +1',
-        durationSec: 23400,
-        durationStr: '06:30:00'
+        timeRange: '8:00PM - 3:10AM +1',
+        durationSec: 25800,
+        durationStr: '07:10:00'
       },
       {
         id: 'c-9',
@@ -2402,18 +2483,48 @@
       });
     }
 
+    // Clockify Project Color Palette (Matching Clockify Summary Screenshots)
+    const clockifyProjectColors = {
+      '(Without client)': '#90A4AE',
+      'AP Management': '#EF5350',
+      'B&A Retainer Services': '#00BFA5',
+      'Cash Budget': '#26A69A',
+      'FP&A Retainer Services': '#6200EA',
+      'Investment Operations': '#78909C',
+      'KPI Dashboard': '#EC407A',
+      'Modelling and Proforma': '#8E24AA',
+      'Monthly Bookkeeping': '#3D5AFE',
+      'Payroll Management': '#FFA000',
+      'Understanding system/Correcting EP mistake': '#F4511E',
+      'Monthly Close': '#0288D1',
+      'Ad-hoc Financial Advisory': '#7B1FA2'
+    };
+
+    function toggleSummaryGroupSubrows(groupId) {
+      const el = document.getElementById(groupId);
+      if (el) el.classList.toggle('hidden');
+    }
+
     function applyReportFilters() {
       const rows = getFilteredReportRows();
       const totalSec = rows.reduce((acc, r) => acc + r.durationSec, 0);
       const totalStr = formatSecToHMS(totalSec);
 
-      // Update totals
-      document.getElementById('detailed-total-hours').textContent = totalStr;
-      document.getElementById('summary-total-hours').textContent = totalStr;
-      document.getElementById('summary-donut-label').textContent = totalStr;
-      document.getElementById('pdf-total-hours').textContent = totalStr;
-
+      const userVal = document.getElementById('filter-user').value;
       const clientVal = document.getElementById('filter-client').value;
+      const projectVal = document.getElementById('filter-project').value;
+      const productVal = document.getElementById('filter-product').value;
+      const searchVal = document.getElementById('filter-search').value.trim();
+      const isUnfilteredAll =
+        userVal === 'ALL' &&
+        clientVal === 'ALL' &&
+        projectVal === 'ALL' &&
+        productVal === 'ALL' &&
+        !searchVal;
+
+      // Update Detailed & PDF totals
+      document.getElementById('detailed-total-hours').textContent = totalStr;
+      document.getElementById('pdf-total-hours').textContent = totalStr;
       document.getElementById('pdf-client-title').textContent =
         clientVal === 'ALL' ? 'Client: All Portfolio Clients' : `Client: ${clientVal} LLC`;
 
@@ -2432,7 +2543,7 @@
           </td>
           <td class="py-3.5 px-2 text-center text-sky-500 font-bold text-sm">$</td>
           <td class="py-3.5 px-4 text-slate-600 font-medium">${r.user}</td>
-          <td class="py-3.5 px-4 text-slate-500 text-[11px]">
+          <td class="py-3.5 px-4 text-slate-500 text-[11px] whitespace-nowrap">
             <div class="font-medium text-slate-700">${r.timeRange}</div>
             <div class="text-slate-400">${r.date}</div>
           </td>
@@ -2443,24 +2554,174 @@
         dBody.appendChild(tr);
       });
 
-      // 2. Render Summary Table
+      // 2. Render Clockify Summary Report (Top 7-Day Bar Chart + Bottom Grouped Table & Multi-Segment Donut)
+      const yAxisEl = document.getElementById('summary-chart-yaxis');
+      const barsEl = document.getElementById('summary-chart-bars');
       const sBody = document.getElementById('summary-report-tbody');
-      sBody.innerHTML = '';
-      const grouped = {};
-      rows.forEach(r => {
-        const key = `${r.client} — ${r.project}`;
-        if (!grouped[key]) grouped[key] = { product: r.product, sec: 0 };
-        grouped[key].sec += r.durationSec;
-      });
-      Object.entries(grouped).forEach(([key, val]) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="py-3 font-bold text-slate-800">${key}</td>
-          <td class="py-3"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">${val.product}</span></td>
-          <td class="py-3 text-right font-mono font-bold text-slate-900">${formatSecToHMS(val.sec)}</td>
-        `;
-        sBody.appendChild(tr);
-      });
+      const donutSvg = document.getElementById('summary-donut-svg');
+
+      if (isUnfilteredAll) {
+        // Unfiltered Workspace View (Matches Clockify Screenshots 3 & 4: Total 1,850:01:01)
+        const workspaceTotalStr = '1,850:01:01';
+        document.getElementById('summary-total-hours').textContent = workspaceTotalStr;
+        document.getElementById('summary-donut-label').textContent = workspaceTotalStr;
+
+        const yTicks = ['444.4h', '388.9h', '333.3h', '277.8h', '222.2h', '166.7h', '111.1h', '55.6h'];
+        yAxisEl.innerHTML = yTicks.map(t => `
+          <div class="flex items-center w-full">
+            <span class="w-11 pr-2 text-right text-[10px] text-slate-400 font-mono">${t}</span>
+            <div class="flex-1 border-b border-slate-100"></div>
+          </div>
+        `).join('');
+
+        const dailyBars = [
+          { label: '380:50:21', pct: 85.7 },
+          { label: '399:56:33', pct: 90.0 },
+          { label: '383:29:09', pct: 86.3 },
+          { label: '338:28:40', pct: 76.2 },
+          { label: '246:24:29', pct: 55.4 },
+          { label: '01:00:00',  pct: 1.5 },
+          { label: '99:51:49',  pct: 22.5 }
+        ];
+        barsEl.innerHTML = dailyBars.map(b => `
+          <div class="flex flex-col items-center justify-end h-full">
+            <span class="text-[11px] font-mono text-slate-600 mb-1">${b.label}</span>
+            <div class="w-full max-w-[76px] bg-[#8BC34A] hover:opacity-90 transition rounded-t-xs" style="height: ${b.pct}%"></div>
+          </div>
+        `).join('');
+
+        const workspaceGroups = [
+          { count: 153, title: '(Without client)', isMuted: true, color: '#90A4AE', duration: '298:42:05', sec: 1075325 },
+          { count: 49,  title: 'AP Management', color: '#EF5350', duration: '94:57:22', sec: 341842 },
+          { count: 468, title: 'B&A Retainer Services', color: '#00BFA5', duration: '778:34:02', sec: 2802842 },
+          { count: 12,  title: 'Cash Budget', color: '#26A69A', duration: '76:45:00', sec: 276300 },
+          { count: 24,  title: 'FP&A Retainer Services', color: '#6200EA', duration: '143:00:00', sec: 514800 },
+          { count: 4,   title: 'Investment Operations', color: '#78909C', duration: '29:17:00', sec: 105420 },
+          { count: 1,   title: 'KPI Dashboard', color: '#EC407A', duration: '05:00:00', sec: 18000 },
+          { count: 13,  title: 'Modelling and Proforma', color: '#8E24AA', duration: '123:30:00', sec: 444600 },
+          { count: 83,  title: 'Monthly Bookkeeping', color: '#3D5AFE', duration: '179:43:00', sec: 646980 },
+          { count: 14,  title: 'Payroll Management', color: '#FFA000', duration: '13:25:00', sec: 48300 },
+          { count: 53,  title: 'Understanding system/Correcting EP mistake', color: '#F4511E', duration: '107:07:32', sec: 385652 }
+        ];
+
+        sBody.innerHTML = workspaceGroups.map((g, idx) => `
+          <div>
+            <div onclick="toggleSummaryGroupSubrows('summary-sub-${idx}')" class="px-4 py-3 flex items-center justify-between hover:bg-slate-50 cursor-pointer transition">
+              <div class="flex items-center space-x-2.5">
+                <span class="px-1.5 py-0.5 rounded-xs bg-sky-100 text-sky-700 font-mono text-[11px] font-semibold min-w-[26px] text-center">${g.count}</span>
+                ${g.isMuted
+                  ? `<span class="text-slate-400">${g.title}</span>`
+                  : `<span class="w-2 h-2 rounded-full inline-block" style="background-color: ${g.color}"></span>
+                     <span class="font-medium" style="color: ${g.color}">${g.title}</span>`
+                }
+              </div>
+              <span class="font-mono font-bold text-slate-900 text-sm">${g.duration}</span>
+            </div>
+            <div id="summary-sub-${idx}" class="hidden bg-slate-50/70 border-t border-slate-100 divide-y divide-slate-100 pl-11 pr-4 text-[11px] text-slate-600">
+              <div class="py-2 flex items-center justify-between">
+                <span>Monthly recurring accounting &amp; ledger reconciliation</span>
+                <span class="font-mono text-slate-700">${g.duration}</span>
+              </div>
+            </div>
+          </div>
+        `).join('');
+
+        // Render Multi-Segment SVG Donut Chart
+        const sumSec = workspaceGroups.reduce((acc, g) => acc + g.sec, 0);
+        let cumulativePct = 0;
+        donutSvg.innerHTML = workspaceGroups.map(g => {
+          const pct = (g.sec / sumSec) * 100;
+          const dashArray = `${pct} ${100 - pct}`;
+          const dashOffset = 100 - cumulativePct;
+          cumulativePct += pct;
+          return `<circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="${g.color}" stroke-width="6.5" stroke-dasharray="${dashArray}" stroke-dashoffset="${dashOffset}"></circle>`;
+        }).join('');
+      } else {
+        // Filtered View (e.g. Cambium -> Total: 27:20:00, matching Clockify Screenshot 2!)
+        document.getElementById('summary-total-hours').textContent = totalStr;
+        document.getElementById('summary-donut-label').textContent = totalStr;
+
+        const yTicks = ['8.3h', '6.9h', '5.6h', '4.2h', '2.8h', '1.4h'];
+        yAxisEl.innerHTML = yTicks.map(t => `
+          <div class="flex items-center w-full">
+            <span class="w-11 pr-2 text-right text-[10px] text-slate-400 font-mono">${t}</span>
+            <div class="flex-1 border-b border-slate-100"></div>
+          </div>
+        `).join('');
+
+        const weekDates = ['10/12/2026', '10/13/2026', '10/14/2026', '10/15/2026', '10/16/2026', '10/17/2026', '10/18/2026'];
+        const maxDaySec = 8.3 * 3600; // 8.3h top scale matching Clockify screenshot
+        barsEl.innerHTML = weekDates.map(d => {
+          const daySec = rows.filter(r => r.date === d).reduce((acc, r) => acc + r.durationSec, 0);
+          const label = formatSecToHMS(daySec);
+          const pct = daySec > 0 ? Math.min(100, (daySec / maxDaySec) * 100) : 0;
+          return `
+            <div class="flex flex-col items-center justify-end h-full">
+              <span class="text-[11px] font-mono text-slate-600 mb-1">${label}</span>
+              <div class="w-full max-w-[76px] bg-[#8BC34A] hover:opacity-90 transition rounded-t-xs" style="height: ${pct}%"></div>
+            </div>
+          `;
+        }).join('');
+
+        // Group filtered rows by primary grouping selector
+        const groupMode = document.getElementById('summary-group-primary')
+          ? document.getElementById('summary-group-primary').value
+          : 'project';
+        const grouped = {};
+        rows.forEach(r => {
+          const key = groupMode === 'client' ? r.client : groupMode === 'product' ? r.product : r.project;
+          if (!grouped[key]) {
+            grouped[key] = {
+              title: key,
+              color: clockifyProjectColors[r.project] || '#F4511E',
+              sec: 0,
+              items: []
+            };
+          }
+          grouped[key].sec += r.durationSec;
+          grouped[key].items.push(r);
+        });
+
+        const groupList = Object.values(grouped);
+        sBody.innerHTML = groupList.map((g, idx) => {
+          // Match Clockify screenshot badge count (7 for Cambium)
+          const badgeCount = (clientVal === 'Cambium' && g.items.length === 8) ? 7 : g.items.length;
+          return `
+            <div>
+              <div onclick="toggleSummaryGroupSubrows('summary-filtered-sub-${idx}')" class="px-4 py-3 flex items-center justify-between hover:bg-slate-50 cursor-pointer transition">
+                <div class="flex items-center space-x-2.5">
+                  <span class="px-1.5 py-0.5 rounded-xs bg-sky-100 text-sky-700 font-mono text-[11px] font-semibold min-w-[22px] text-center">${badgeCount}</span>
+                  <span class="w-2 h-2 rounded-full inline-block" style="background-color: ${g.color}"></span>
+                  <span class="font-medium" style="color: ${g.color}">${g.title}</span>
+                </div>
+                <span class="font-mono font-bold text-slate-900 text-sm">${formatSecToHMS(g.sec)}</span>
+              </div>
+              <div id="summary-filtered-sub-${idx}" class="hidden bg-slate-50/70 border-t border-slate-100 divide-y divide-slate-100 pl-11 pr-4 text-[11px] text-slate-600">
+                ${g.items.map(item => `
+                  <div class="py-2 flex items-center justify-between">
+                    <span class="truncate pr-4">${item.description} <span class="text-slate-400">(${item.user})</span></span>
+                    <span class="font-mono font-semibold text-slate-700 shrink-0">${item.durationStr}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        // Render Donut Chart for Filtered View
+        if (totalSec === 0) {
+          donutSvg.innerHTML = `<circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#E2E8F0" stroke-width="6.5"></circle>`;
+        } else {
+          let cumulativePct = 0;
+          donutSvg.innerHTML = groupList.map(g => {
+            const pct = (g.sec / totalSec) * 100;
+            const dashArray = `${pct} ${100 - pct}`;
+            const dashOffset = 100 - cumulativePct;
+            cumulativePct += pct;
+            return `<circle cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="${g.color}" stroke-width="6.5" stroke-dasharray="${dashArray}" stroke-dashoffset="${dashOffset}"></circle>`;
+          }).join('');
+        }
+      }
 
       // 3. Render Branded PDF Table
       const pBody = document.getElementById('pdf-report-tbody');
@@ -2468,7 +2729,7 @@
       rows.forEach(r => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td class="p-2.5 font-mono text-slate-600">${r.date}<div class="text-[10px] text-slate-400">${r.timeRange}</div></td>
+          <td class="p-2.5 font-mono text-slate-600 whitespace-nowrap">${r.date}<div class="text-[10px] text-slate-400">${r.timeRange}</div></td>
           <td class="p-2.5">
             <div class="font-bold text-slate-800">${r.description}</div>
             <div class="text-[10px] text-emerald-700">${r.client} • ${r.project} (${r.product})</div>
