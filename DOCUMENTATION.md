@@ -123,3 +123,32 @@ Once Phase 1 is live and all historical + new time entries are stored in `TimeLo
 | `GET` | `/api/tasks/time-reports/detailed/` | Paginated list of `TimeLog` records filtered by `start_date`, `end_date`, `user_id`, `company_id`, `project_id`, `product_id`, and `search` |
 | `GET` | `/api/tasks/time-reports/weekly/` | Returns 7-day (`Mon`–`Sun`) aggregated matrix per Project/User for the selected week |
 | `GET` | `/api/tasks/time-reports/export/` | Generates downloadable **CSV**, **Excel (`.xlsx`)**, or **EP-Branded PDF** using the active filter parameters |
+
+---
+
+## 3. Open Decision Question for the Team: How Should Imported Clockify Entries Map to TMS Tasks?
+
+### Context
+In Clockify, most time entries only contain **4 fields** (and usually **no** separate Clockify "Task" field):
+1. **Client** (e.g., `Cambium`) -> maps to **EP Company** (`Cambium LLC`)
+2. **Project** (e.g., `Understanding system/Correcting EP mistake`) -> maps to **EP Project** (linked to **Product: `Accounting`**)
+3. **Time Entry Description** (e.g., `Categorization of Bank statement of 4401`)
+4. **User & Duration** (e.g., `Hassan`, `02:00:00`)
+
+In the current backend code (`backend/tasks/services/clockify_import.py`, lines 308–313), `TimeLog` requires a `task_id`. Because Clockify entries do not have a separate `task` column filled in, the existing importer skips them (`"no task resolved"`).
+
+### Question for Team Alignment
+**When we import time entries from Clockify into EP Central (TMS), how should those entries be linked to TMS Tasks? Please choose from the 3 options below:**
+
+#### Option 1 — Map to the Company's Monthly Task Tracker (Recommended for Recurring Accounting)
+- **How it works**: In EP Central, each company already has a monthly recurring task (e.g., `Cambium - Task Tracker - October 2026`). When importing Clockify entries for `Cambium` in October 2026, all imported entries attach as **Time Logs** inside `Cambium - Task Tracker - October 2026` (under `Activity -> Time`), tagged with their respective `Project` (`Understanding system/Correcting EP mistake`) and `Description` (`Categorization of Bank statement of 4401`).
+- **Pros**: Keeps the TMS Kanban Task Board clean (no clutter from hundreds of one-off descriptions), while ensuring all hours appear both inside the Company's monthly Task Modal **and** in Clockify Dashboard/Reports.
+
+#### Option 2 — Create or Match a TMS Task from the Time Entry Description
+- **How it works**: Use the Clockify **Time Entry Description** (e.g., `Categorization of Bank statement of 4401`) as the TMS Task title. If a task with that title already exists under `Cambium`, attach the time log to it; otherwise, create a new TMS Task on the board and attach the time log.
+- **Pros / Cons**: Every distinct description becomes a task card on the board, which provides granular task cards but can flood the Kanban board with hundreds of small tasks if accountants type free-form daily descriptions in Clockify.
+
+#### Option 3 — Store Historical Clockify Logs Directly Against `(Company + Project + User)` (No Task Required)
+- **How it works**: Make `TimeLog.task` optional (`null=True`) and store `company` + `project` directly on `TimeLog`. Historical Clockify imports go straight into the `TimeLog` table for **Clockify Dashboard & Reports** without creating or modifying cards on the TMS Task Board. Going forward, when users log time directly inside EP Central tasks, those new entries will have `task_id` populated.
+- **Pros**: Complete separation between historical Clockify reporting data and active TMS Kanban task cards.
+
