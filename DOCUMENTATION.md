@@ -25,23 +25,26 @@ As Enduring Planet transitions the Accounting and FP&A teams from standalone Clo
      - Select the **Project** from a dropdown before starting the **Live Timer** or logging **Start / End** times manually.
      - View all logged time entries on the task and click **Edit** to update the Project, Date, Duration, or Note at any time.
 
-2. **Domain Relationships (`Company` <-> `Project` -> `Product`)**:
-   - **Project -> Product (Many-to-One)**: Every Project belongs to a specific EP Product line (`Accounting` or `FP&A`).
-   - **Company <-> Project (Many-to-Many)**: A single Company (Client) can have multiple Projects, and standard Projects (such as *Monthly Close*, *Understanding system/Correcting EP mistake*, or *Modelling and Proforma*) can be shared across multiple Companies.
-   - **Clockify Client = EP Company**: Clockify Clients automatically match to existing EP Companies (case-insensitive) or create a new Company if unmatched.
+2. **Domain Relationships & Inverted Clockify Naming Convention (`Company` <-> `Project` -> `Product`)**:
+   - **Important Clockify Workspace Discovery**: In our team's Clockify workspace, the `Client` and `Project` fields are used in an inverted hierarchy:
+     - **Clockify `Project` = EP Central `Company`** (e.g., *Alchemy CO2*, *Compost Colorado*, *Emrgy*, *Erg Bio*, *Cambium*, *Dollaride*, *Bedrock Energy*, *Moby Filters*).
+     - **Clockify `Client` = EP Central `Project` (Service Workstream)** (e.g., *B&A Retainer Services*, *FP&A Retainer Services*, *AP Management*, *Cash Budget*, *Fund Model FP&A*, *Investment Operations*, *Accounting Audit*, *Understanding system/Correcting EP mistake*).
+   - **EP Project -> EP Product (Many-to-One)**: Every EP Project (imported from a Clockify `Client`) belongs to a specific EP Product line (`Accounting` or `FP&A`).
+   - **EP Company <-> EP Project (Many-to-Many)**: A single EP Company (imported from a Clockify `Project`) can have multiple EP Projects, and standard EP Projects (such as *B&A Retainer Services*, *FP&A Retainer Services*, *AP Management*, or *Cash Budget*) are shared across multiple EP Companies.
+   - **Auto-Match / Auto-Create on Import**: During Clockify import, Clockify `Project` names automatically match to existing EP Companies (case-insensitive) or create a new EP Company if unmatched, while Clockify `Client` names map to EP Projects linked to `Accounting` or `FP&A`.
 
 3. **Jira-Style 4-Screen Clockify Import Wizard (`Settings > Clockify Integration`)**:
    - **No UI API Key Input**: The Clockify API key is stored securely in backend environment variables (`settings.CLOCKIFY_API_KEY`), never exposed in the UI.
    - **Step 1 — Select Workspace & Batch Scope**:
      - Select Clockify Workspace (`Enduring Planet — Accounting & FP&A`).
      - Select **Time Range**: `This Month`, `This Week`, `All Time`, or `Custom Date Range`.
-     - Select **Onboarding Batch Scope**: Because users and clients are onboarded to TMS in batches, admins can choose:
+     - Select **Onboarding Batch Scope**: Because users, companies, and projects are onboarded to TMS in batches, admins can choose:
        - *Import All Tasks & Time Entries*
-       - *Import for Certain Client (Company)*
+       - *Import for Certain Company (Clockify Project)*
        - *Import for Certain User (Team Member)*
-       - *Import for Certain Project*
+       - *Import for Certain Project / Workstream (Clockify Client)*
    - **Step 2 — Map Fields (Separate Screen)**:
-     - Review & override auto-matched **Users** (by email), **Clients -> EP Companies**, and **Projects -> EP Products (`Accounting` / `FP&A`)**.
+     - Review & override auto-matched **Users** (by email), **Clockify Projects -> EP Companies**, and **Clockify Clients -> EP Projects & Products (`Accounting` / `FP&A`)**.
    - **Step 3 — Preview & Confirm (Separate Screen)**:
      - Filterable preview table with row-level checkboxes to include/exclude specific time entries before committing.
    - **Step 4 — Import Complete**:
@@ -67,10 +70,12 @@ An audit of the current Django backend (`backend/tasks/`) highlights four requir
 - **Required Changes**:
   - Add `companies = models.ManyToManyField('company.Company', related_name='assigned_projects', blank=True)` on `Project` so standard projects (linked to `Accounting` or `FP&A` Products) can be assigned across multiple Companies, and each Company can have multiple Projects.
 
-#### 3. Fix Task Resolution Skipping in `backend/tasks/services/clockify_import.py`
-- **Current State**: In `clockify_import.py` (lines 308–313), if a Clockify entry does not have an explicit `task` column value, the import skips the row (`no task resolved`). In Clockify, most entries only specify `Client` + `Project` + `Description`.
+#### 3. Invert `Client`/`Project` Mapping & Fix Task Skipping in `backend/tasks/services/clockify_import.py`
+- **Current State**:
+  - `clockify_import.py` currently maps Clockify `Client` -> EP `Company` and Clockify `Project` -> EP `Project`. However, in our actual Clockify workspace, **Clockify `Project` is the Company** (e.g., *Alchemy CO2*, *Compost Colorado*, *Emrgy*, *Erg Bio*, *Cambium*) and **Clockify `Client` is the Project / Service Workstream** (e.g., *B&A Retainer Services*, *FP&A Retainer Services*, *AP Management*, *Cash Budget*).
+  - Additionally, in `clockify_import.py` (lines 308–313), if a Clockify entry does not have an explicit `task` column value, the import skips the row (`no task resolved`).
 - **Required Changes**:
-  - Resolve `(Company, Project, Product)` first.
+  - Invert the entity resolver in `clockify_import.py` so **Clockify `Project` -> EP `Company`** and **Clockify `Client` -> EP `Project` (linked to `Product`: `Accounting` or `FP&A`)**.
   - If no explicit task name is present on the Clockify entry, either match the company's active monthly tracker task for that month/product or attach the `TimeLog` directly to `(company, project)` so zero valid Clockify entries are skipped.
 
 #### 4. Direct Clockify REST API Client & Multi-Step `ClockifyImportJob`
@@ -129,9 +134,9 @@ Once Phase 1 is live and all historical + new time entries are stored in `TimeLo
 ## 3. Open Decision Question for the Team: How Should Imported Clockify Entries Map to TMS Tasks?
 
 ### Context
-In Clockify, most time entries only contain **4 fields** (and usually **no** separate Clockify "Task" field):
-1. **Client** (e.g., `Cambium`) -> maps to **EP Company** (`Cambium LLC`)
-2. **Project** (e.g., `Understanding system/Correcting EP mistake`) -> maps to **EP Project** (linked to **Product: `Accounting`**)
+In Clockify, most time entries only contain **4 fields** (and usually **no** separate Clockify "Task" field), and in our workspace **Clockify `Project` represents the Company** while **Clockify `Client` represents the Project / Service Workstream**:
+1. **Clockify `Project` (Company)** (e.g., `Alchemy CO2`, `Emrgy`, `Cambium`) -> maps to **EP Company** (`Alchemy CO2`, `Emrgy`, `Cambium LLC`)
+2. **Clockify `Client` (Project / Service Workstream)** (e.g., `B&A Retainer Services`, `AP Management`, `Cash Budget`, `FP&A Retainer Services`, `Understanding system/Correcting EP mistake`) -> maps to **EP Project** (linked to **Product: `Accounting` or `FP&A`**)
 3. **Time Entry Description** (e.g., `Categorization of Bank statement of 4401`)
 4. **User & Duration** (e.g., `Hassan`, `02:00:00`)
 
