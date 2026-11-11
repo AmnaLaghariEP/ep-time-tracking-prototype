@@ -131,29 +131,63 @@ Once Phase 1 is live and all historical + new time entries are stored in `TimeLo
 
 ---
 
-## 3. Open Decision Question for the Team: How Should Imported Clockify Entries Map to TMS Tasks?
+## 3. Open Questions for Team Alignment & Requirement Clarification
 
-### Context
-In Clockify, most time entries only contain **4 fields** (and usually **no** separate Clockify "Task" field), and in our workspace **Clockify `Project` represents the Company** while **Clockify `Client` represents the Project / Service Workstream**:
-1. **Clockify `Project` (Company)** (e.g., `Alchemy CO2`, `Emrgy`, `Cambium`) -> maps to **EP Company** (`Alchemy CO2`, `Emrgy`, `Cambium LLC`)
-2. **Clockify `Client` (Project / Service Workstream)** (e.g., `B&A Retainer Services`, `AP Management`, `Cash Budget`, `FP&A Retainer Services`, `Understanding system/Correcting EP mistake`) -> maps to **EP Project** (linked to **Product: `Accounting` or `FP&A`**)
-3. **Time Entry Description** (e.g., `Categorization of Bank statement of 4401`)
-4. **User & Duration** (e.g., `Hassan`, `02:00:00`)
+To finalize the Phase 1 backend rules and avoid data mismatches during migration, please review and align on the following **6 requirement questions**:
 
-In the current backend code (`backend/tasks/services/clockify_import.py`, lines 308–313), `TimeLog` requires a `task_id`. Because Clockify entries do not have a separate `task` column filled in, the existing importer skips them (`"no task resolved"`).
+---
 
-### Question for Team Alignment
-**When we import time entries from Clockify into EP Central (TMS), how should those entries be linked to TMS Tasks? Please choose from the 3 options below:**
+### Question 1: Clockify `Client` vs. `Project` — Mixed Naming & TMS Mapping
+- **What we see in Clockify right now**:
+  - For most entries in Clockify, **Clockify `Project` is the Company** (e.g., `Alchemy CO2`, `Compost Colorado`, `Emrgy`, `Erg Bio`) and **Clockify `Client` is the Project / Service Workstream** (e.g., `B&A Retainer Services`, `FP&A Retainer Services`, `AP Management`, `Cash Budget`, `Investment Operations`).
+  - **However, it is not 100% consistent**: in the `Client` dropdown, some actual Companies (such as `Cambium` and `Cambium Carbon PBC`) also appear as Clockify `Clients` with their workstream (`Understanding system/Correcting EP mistake`) entered as the Clockify `Project`. In other cases, Company and Project are combined in a single name (e.g., `Portmanteau: Underwriting Framework`).
+- **Questions for the Team**:
+  1. Going forward in EP Central (TMS), do we all agree to standardize so **Company = Portfolio Company** (e.g., `Cambium`, `Alchemy CO2`) and **Project = Service Workstream** (e.g., `B&A Retainer Services`, `AP Management`, `Cash Budget`) linked to a **Product** (`Accounting` or `FP&A`)?
+  2. For the mixed entries in Clockify (like `Cambium` appearing under `Client`), will the Accounting team clean/standardize them inside Clockify before we import, **or** should our Step 2 (`Map Fields`) wizard allow the Admin to flip/assign whether each imported label is a **Company** or a **Project**?
 
-#### Option 1 — Map to the Company's Monthly Task Tracker (Recommended for Recurring Accounting)
-- **How it works**: In EP Central, each company already has a monthly recurring task (e.g., `Cambium - Task Tracker - October 2026`). When importing Clockify entries for `Cambium` in October 2026, all imported entries attach as **Time Logs** inside `Cambium - Task Tracker - October 2026` (under `Activity -> Time`), tagged with their respective `Project` (`Understanding system/Correcting EP mistake`) and `Description` (`Categorization of Bank statement of 4401`).
-- **Pros**: Keeps the TMS Kanban Task Board clean (no clutter from hundreds of one-off descriptions), while ensuring all hours appear both inside the Company's monthly Task Modal **and** in Clockify Dashboard/Reports.
+---
 
-#### Option 2 — Create or Match a TMS Task from the Time Entry Description
-- **How it works**: Use the Clockify **Time Entry Description** (e.g., `Categorization of Bank statement of 4401`) as the TMS Task title. If a task with that title already exists under `Cambium`, attach the time log to it; otherwise, create a new TMS Task on the board and attach the time log.
-- **Pros / Cons**: Every distinct description becomes a task card on the board, which provides granular task cards but can flood the Kanban board with hundreds of small tasks if accountants type free-form daily descriptions in Clockify.
+### Question 2: How Should Imported Clockify Entries Map to TMS Tasks? (Choose 1 of 3 Options)
+In Clockify, time entries only contain `Client`, `Project`, `Description` (e.g., `Categorization of Bank statement of 4401`), and `User / Duration` — there is no separate Clockify "Task" field filled in. When we import these entries into EP Central, how should they connect to TMS Tasks?
 
-#### Option 3 — Store Historical Clockify Logs Directly Against `(Company + Project + User)` (No Task Required)
-- **How it works**: Make `TimeLog.task` optional (`null=True`) and store `company` + `project` directly on `TimeLog`. Historical Clockify imports go straight into the `TimeLog` table for **Clockify Dashboard & Reports** without creating or modifying cards on the TMS Task Board. Going forward, when users log time directly inside EP Central tasks, those new entries will have `task_id` populated.
-- **Pros**: Complete separation between historical Clockify reporting data and active TMS Kanban task cards.
+- **Option 1 — Map to the Company's Monthly Task Tracker (Recommended for Recurring Accounting)**:
+  - **How it works**: In EP Central, each company already has a monthly recurring task (e.g., `Cambium - Task Tracker - October 2026`). All imported Clockify entries for `Cambium` in October 2026 attach as **Time Logs** inside `Cambium - Task Tracker - October 2026` (under `Activity -> Time`), tagged with their respective `Project` and `Description`.
+  - **Pros**: Keeps the TMS Kanban Task Board clean (no clutter from hundreds of daily descriptions), while ensuring all hours appear both inside the Company's monthly Task Modal **and** in Clockify Dashboard/Reports.
+- **Option 2 — Create or Match a Separate TMS Task Card from Each Time Entry Description**:
+  - **How it works**: Use the Clockify **Time Entry Description** (e.g., `Categorization of Bank statement of 4401`) as the TMS Task title. If a task with that title already exists under `Cambium`, attach the time log to it; otherwise, create a new TMS Task card on the board and attach the time log.
+  - **Pros / Cons**: Every distinct description becomes a task card on the board, which can flood the Kanban board with hundreds of small tasks if accountants write free-form daily descriptions.
+- **Option 3 — Store Historical Clockify Logs Directly Against `(Company + Project + User)` Without Creating Tasks**:
+  - **How it works**: Make `TimeLog.task` optional (`null=True`) and store `company` + `project` directly on `TimeLog`. Historical Clockify imports go straight into the `TimeLog` table for **Clockify Dashboard & Reports** without creating or modifying cards on the TMS Task Board. Going forward, when users log time inside EP Central tasks, those new entries will have `task_id` populated.
+
+---
+
+### Question 3: How Should We Handle `(Without client)` (`335+ hrs`) and Internal Enduring Planet Hours (`235+ hrs`)?
+- **What we see in Clockify**:
+  - In the Summary Report, **`168 entries (335:52:05 hours)`** have **`(Without client)` / `NO CLIENT`** (for example, `Fieldston Dev pledgor 2`).
+  - On the Dashboard, the top item is **`Enduring Planet - Accounting` (`235:17:48 hours`)**, which is internal EP work rather than an external portfolio client.
+- **Questions for the Team**:
+  1. When an imported Clockify entry has **`(Without client)`**, should it be assigned to a default project (e.g., `General / Uncategorized Accounting`) so those 335+ hours are not skipped?
+  2. For internal company work (`Enduring Planet - Accounting`), should we have an **`Enduring Planet (Internal)`** company in TMS so internal hours can be tracked and reported alongside client hours?
+
+---
+
+### Question 4: Duplicate / Variant Company Names (`Cambium` vs. `Cambium Carbon PBC`)
+- **What we see in Clockify**:
+  - Clockify has both `Cambium` and `Cambium Carbon PBC` (and similarly `Moby Filter` vs. `Moby Filters Inc`).
+- **Question for the Team**:
+  - Should our Step 2 (`Map Fields`) screen let the Admin merge/map multiple Clockify names (e.g., both `Cambium` and `Cambium Carbon PBC`) into the single official EP Central Company record (`Cambium Carbon PBC`) so we never create duplicate companies in EP Central?
+
+---
+
+### Question 5: Batch Onboarding — What Happens When a Company Has Hours from Users Not Yet in TMS?
+- **Context**: We plan to onboard users and clients to TMS in batches. However, if we import all historical hours for `Cambium`, some of those entries may have been logged by an analyst who hasn't been onboarded to TMS yet (or a former team member/contractor).
+- **Question for the Team**:
+  - Should we **import 100% of the company's entries** by storing the Clockify user's name/email on `TimeLog` even if they don't have an active TMS user account yet (and automatically link them when they join TMS later), so that the Company's total hours in EP Central match Clockify 100%?
+
+---
+
+### Question 6: One-Time Migration vs. Ongoing Re-Sync with Clockify
+- **Question for the Team**:
+  - Once a batch of users/clients is imported into EP Central, will they stop using Clockify immediately and log time **100% inside EP Central**, or will teams use both systems in parallel during transition (meaning if someone edits an old entry's hours in Clockify, re-running the import should overwrite/update the previously imported entry in EP Central)?
+
 
