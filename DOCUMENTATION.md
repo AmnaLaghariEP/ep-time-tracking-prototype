@@ -131,63 +131,59 @@ Once Phase 1 is live and all historical + new time entries are stored in `TimeLo
 
 ---
 
-## 3. Open Questions for Team Alignment & Requirement Clarification
+## 3. Backend Edge Cases, Loopholes & Engineering Safeguards (Dev Checklist)
 
-To finalize the Phase 1 backend rules and avoid data mismatches during migration, please review and align on the following **6 requirement questions**:
+An audit of the live Clockify workspace data and the existing Django importer (`backend/tasks/services/clockify_import.py`) identified **7 critical edge cases** that the backend implementation must handle:
 
----
+### Edge Case 1: Mixed / Inverted `Client` vs. `Project` Naming Inside Clockify
+- **The Problem**: In most of the Clockify workspace, `Project` is the Portfolio Company (e.g., `Alchemy CO2`, `Emrgy`, `Erg Bio`) and `Client` is the Service Workstream (e.g., `B&A Retainer Services`, `AP Management`, `Cash Budget`). However, some historical entries have the Company under `Client` (e.g., `Cambium`, `Cambium Carbon PBC`) and the workstream under `Project` (`Understanding system/Correcting EP mistake`), or combine both with a colon (`Portmanteau: Underwriting Framework`).
+- **Backend Solution**:
+  - In `resolve_entities()` (Step 1 -> Step 2), match both Clockify `client_name` and `project_name` against `Company.objects` and `Project.objects` (case-insensitive + alias table).
+  - In `ClockifyImportJob.field_mappings` (Step 2), allow per-row/per-pair role assignment (`company_source: 'project' | 'client'`) so the Admin can flip any inverted historical entry before execution.
 
-### Question 1: Clockify `Client` vs. `Project` — Mixed Naming & TMS Mapping
-- **What we see in Clockify right now**:
-  - For most entries in Clockify, **Clockify `Project` is the Company** (e.g., `Alchemy CO2`, `Compost Colorado`, `Emrgy`, `Erg Bio`) and **Clockify `Client` is the Project / Service Workstream** (e.g., `B&A Retainer Services`, `FP&A Retainer Services`, `AP Management`, `Cash Budget`, `Investment Operations`).
-  - **However, it is not 100% consistent**: in the `Client` dropdown, some actual Companies (such as `Cambium` and `Cambium Carbon PBC`) also appear as Clockify `Clients` with their workstream (`Understanding system/Correcting EP mistake`) entered as the Clockify `Project`. In other cases, Company and Project are combined in a single name (e.g., `Portmanteau: Underwriting Framework`).
-- **Questions for the Team**:
-  1. Going forward in EP Central (TMS), do we all agree to standardize so **Company = Portfolio Company** (e.g., `Cambium`, `Alchemy CO2`) and **Project = Service Workstream** (e.g., `B&A Retainer Services`, `AP Management`, `Cash Budget`) linked to a **Product** (`Accounting` or `FP&A`)?
-  2. For the mixed entries in Clockify (like `Cambium` appearing under `Client`), will the Accounting team clean/standardize them inside Clockify before we import, **or** should our Step 2 (`Map Fields`) wizard allow the Admin to flip/assign whether each imported label is a **Company** or a **Project**?
+### Edge Case 2: Duplicate / Variant Company Names (`Cambium` vs. `Cambium Carbon PBC`)
+- **The Problem**: `clockify_import.py` (line 185) currently uses `Company.objects.get(name__iexact=name)` and auto-creates a new `Company` when an exact string match fails. Because Clockify contains variants like `Cambium` and `Cambium Carbon PBC` (or `Moby Filter` vs. `Moby Filters Inc`), blind auto-creation will create duplicate companies in `company_company`.
+- **Backend Solution**:
+  - Never auto-create a `Company` during `execute_import()` unless the Admin explicitly selects `"Create New Company"` in Step 2 (`field_mappings['companies'][clockify_name] = {'action': 'map', 'company_id': existing_id}`).
+  - Support many-to-one alias mapping so multiple Clockify strings (`"Cambium"`, `"Cambium Carbon PBC"`) resolve to the same `company_id`.
 
----
+### Edge Case 3: Entries with `(Without client)` / `NO CLIENT` (`335:52:05` hrs) & Internal EP Work (`235:17:48` hrs)
+- **The Problem**: Over 168 entries (`335:52:05` hours) in Clockify have `client = null` (`(Without client)`), and `235:17:48` hours are logged under `Enduring Planet - Accounting` (internal company work).
+- **Backend Solution**:
+  - Allow `TimeLog.project` to fall back to a default `Uncategorized / General` `Project` (under `Accounting` or `FP&A`) when Clockify's workstream is null.
+  - Seed or map an `Enduring Planet (Internal)` `Company` record so internal accounting/FP&A hours are preserved and reportable without polluting external client metrics.
 
-### Question 2: How Should Imported Clockify Entries Map to TMS Tasks? (Choose 1 of 3 Options)
-In Clockify, time entries only contain `Client`, `Project`, `Description` (e.g., `Categorization of Bank statement of 4401`), and `User / Duration` — there is no separate Clockify "Task" field filled in. When we import these entries into EP Central, how should they connect to TMS Tasks?
+### Edge Case 4: Batch Onboarding — Preserving Hours of Users Not Yet in TMS
+- **The Problem**: `clockify_import.py` (lines 298–301) currently skips any row where the Clockify user's email is not found in `users_user` (`if not user_info['found']: rows_skipped += 1; continue`). Because users are onboarded to TMS in batches, importing all hours for a Company will drop hours logged by analysts who haven't been onboarded yet or former contractors—causing EP Central's company totals to be lower than Clockify's.
+- **Backend Solution**:
+  - Make `TimeLog.user` nullable (`null=True, blank=True`) and add `external_user_email = models.EmailField(blank=True, default='', db_index=True)` and `external_user_name = models.CharField(max_length=150, blank=True, default='')` on `TimeLog`.
+  - Add a `post_save` signal on `User` creation that backfills `TimeLog.objects.filter(user__isnull=True, external_user_email__iexact=instance.email).update(user=instance)`.
 
-- **Option 1 — Map to the Company's Monthly Task Tracker (Recommended for Recurring Accounting)**:
-  - **How it works**: In EP Central, each company already has a monthly recurring task (e.g., `Cambium - Task Tracker - October 2026`). All imported Clockify entries for `Cambium` in October 2026 attach as **Time Logs** inside `Cambium - Task Tracker - October 2026` (under `Activity -> Time`), tagged with their respective `Project` and `Description`.
-  - **Pros**: Keeps the TMS Kanban Task Board clean (no clutter from hundreds of daily descriptions), while ensuring all hours appear both inside the Company's monthly Task Modal **and** in Clockify Dashboard/Reports.
-- **Option 2 — Create or Match a Separate TMS Task Card from Each Time Entry Description**:
-  - **How it works**: Use the Clockify **Time Entry Description** (e.g., `Categorization of Bank statement of 4401`) as the TMS Task title. If a task with that title already exists under `Cambium`, attach the time log to it; otherwise, create a new TMS Task card on the board and attach the time log.
-  - **Pros / Cons**: Every distinct description becomes a task card on the board, which can flood the Kanban board with hundreds of small tasks if accountants write free-form daily descriptions.
-- **Option 3 — Store Historical Clockify Logs Directly Against `(Company + Project + User)` Without Creating Tasks**:
-  - **How it works**: Make `TimeLog.task` optional (`null=True`) and store `company` + `project` directly on `TimeLog`. Historical Clockify imports go straight into the `TimeLog` table for **Clockify Dashboard & Reports** without creating or modifying cards on the TMS Task Board. Going forward, when users log time inside EP Central tasks, those new entries will have `task_id` populated.
+### Edge Case 5: Active / Running Timers at the Moment of Import
+- **The Problem**: When fetching entries via the Clockify REST API (`GET /v1/workspaces/{workspaceId}/user/{userId}/time-entries`), any timer currently running has `timeInterval.end = null` and `timeInterval.duration = null`, which causes duration parsing to fail.
+- **Backend Solution**:
+  - Filter out in-progress entries (`if not entry.get('timeInterval', {}).get('end'): continue`) during `fetch_clockify_entries()`.
 
----
+### Edge Case 6: Idempotent Re-Imports & Updating Corrected Clockify Entries
+- **The Problem**: During transition, an accountant may fix a typo in Clockify (e.g., changing `02:00:00` to `03:30:00`) and the Admin may re-run the import for that date range.
+- **Backend Solution**:
+  - Store `clockify_entry_id = models.CharField(max_length=64, unique=True, null=True, blank=True, db_index=True)` on `TimeLog`.
+  - Use `TimeLog.objects.update_or_create(clockify_entry_id=entry_id, defaults={...})` during `execute_import()` so re-imports are 100% idempotent and automatically update durations/notes if modified in Clockify.
 
-### Question 3: How Should We Handle `(Without client)` (`335+ hrs`) and Internal Enduring Planet Hours (`235+ hrs`)?
-- **What we see in Clockify**:
-  - In the Summary Report, **`168 entries (335:52:05 hours)`** have **`(Without client)` / `NO CLIENT`** (for example, `Fieldston Dev pledgor 2`).
-  - On the Dashboard, the top item is **`Enduring Planet - Accounting` (`235:17:48 hours`)**, which is internal EP work rather than an external portfolio client.
-- **Questions for the Team**:
-  1. When an imported Clockify entry has **`(Without client)`**, should it be assigned to a default project (e.g., `General / Uncategorized Accounting`) so those 335+ hours are not skipped?
-  2. For internal company work (`Enduring Planet - Accounting`), should we have an **`Enduring Planet (Internal)`** company in TMS so internal hours can be tracked and reported alongside client hours?
-
----
-
-### Question 4: Duplicate / Variant Company Names (`Cambium` vs. `Cambium Carbon PBC`)
-- **What we see in Clockify**:
-  - Clockify has both `Cambium` and `Cambium Carbon PBC` (and similarly `Moby Filter` vs. `Moby Filters Inc`).
-- **Question for the Team**:
-  - Should our Step 2 (`Map Fields`) screen let the Admin merge/map multiple Clockify names (e.g., both `Cambium` and `Cambium Carbon PBC`) into the single official EP Central Company record (`Cambium Carbon PBC`) so we never create duplicate companies in EP Central?
+### Edge Case 7: Timezone & Overnight (`+1`) Shift Boundaries (PKT `UTC+5` vs. US Timezones)
+- **The Problem**: Many shifts are overnight (`9:00PM - 3:00AM +1`). If `started_at` is stored or queried in naive UTC instead of the workspace timezone, an entry logged at `9:00 PM PKT` (`4:00 PM UTC`) vs. `3:00 AM PKT` (`10:00 PM UTC previous day`) can land on a different date bucket in the Summary and Weekly charts.
+- **Backend Solution**:
+  - Store timezone-aware `started_at` and `ended_at` (`DateTimeField`) on `TimeLog`, and group daily/weekly report aggregations using `TruncDate('started_at', tzinfo= ZoneInfo(settings.CLOCKIFY_WORKSPACE_TIMEZONE))`.
 
 ---
 
-### Question 5: Batch Onboarding — What Happens When a Company Has Hours from Users Not Yet in TMS?
-- **Context**: We plan to onboard users and clients to TMS in batches. However, if we import all historical hours for `Cambium`, some of those entries may have been logged by an analyst who hasn't been onboarded to TMS yet (or a former team member/contractor).
-- **Question for the Team**:
-  - Should we **import 100% of the company's entries** by storing the Clockify user's name/email on `TimeLog` even if they don't have an active TMS user account yet (and automatically link them when they join TMS later), so that the Company's total hours in EP Central match Clockify 100%?
+## 4. Task-Mapping Implementation Options (Pending Product Sign-Off)
 
----
+In `backend/tasks/services/clockify_import.py` (lines 308–313), `TimeLog` currently requires a `task_id`. Once the Accounting team confirms their preferred option in the Demo Guide, implement one of the following in `execute_import()`:
 
-### Question 6: One-Time Migration vs. Ongoing Re-Sync with Clockify
-- **Question for the Team**:
-  - Once a batch of users/clients is imported into EP Central, will they stop using Clockify immediately and log time **100% inside EP Central**, or will teams use both systems in parallel during transition (meaning if someone edits an old entry's hours in Clockify, re-running the import should overwrite/update the previously imported entry in EP Central)?
+1. **Option 1 (Attach to Monthly Tracker Task)**: Resolve `(company, month, product)` -> attach `TimeLog` to the company's active monthly recurring tracker `Task` (e.g., `Cambium - Task Tracker - October 2026`), setting `TimeLog.project = resolved_project` and `TimeLog.description = clockify_description`.
+2. **Option 2 (Task per Description)**: `Task.objects.get_or_create(company=company, project=project, title__iexact=clockify_description)` and attach `TimeLog` to that task.
+3. **Option 3 (Nullable `TimeLog.task`)**: Set `TimeLog.task = None`, `TimeLog.company = company`, `TimeLog.project = project` for historical Clockify imports, while requiring `task` only for time logged directly inside the EP Central Task Drawer.
+
 
 
