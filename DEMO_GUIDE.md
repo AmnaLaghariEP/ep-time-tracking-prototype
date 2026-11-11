@@ -91,22 +91,3 @@ In Clockify, time entries only have `Client`, `Project`, `Description` (e.g., `C
   1. When an entry in Clockify has **`(Without client)`**, should we assign it to a default project (e.g., `General / Uncategorized`) so those 335+ hours are included in reports?
   2. For internal hours (`Enduring Planet - Accounting`), should we have an **`Enduring Planet (Internal)`** company option in TMS?
 
----
-
-### Question 4: Merging Duplicate Company Names (`Cambium` vs. `Cambium Carbon PBC`)
-- **What we noticed in Clockify**:
-  - Clockify has both `Cambium` and `Cambium Carbon PBC` (and similarly `Moby Filter` vs. `Moby Filters Inc`).
-- **Question for Daim's Team**:
-  - During import (`Step 2: Map Fields`), should we merge both `Cambium` and `Cambium Carbon PBC` into the single official **`Cambium Carbon PBC`** company in EP Central?
-
----
-
-### Question 5: Batch Onboarding — Historical Hours from Analysts Not Yet in TMS
-- **Question for Daim's Team**:
-  - As we onboard team members in batches, if we import all historical hours for a company (like `Cambium`), some entries may belong to an analyst who hasn't been onboarded to TMS yet (or a past team member). Should we **import 100% of those hours** under their name/email so the company's total hours in EP Central match Clockify 100% (and auto-link to their profile once they join TMS)?
-
----
-
-### Question 6: Transition Plan — Cutover vs. Parallel Logging
-- **Question for Daim's Team**:
-  - Once a batch of users/clients is imported into EP Central, will that group switch **100% to logging time inside EP Central**, or will they continue logging in Clockify for a transition period (requiring periodic re-imports)?
