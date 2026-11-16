@@ -1,189 +1,124 @@
-# Enduring Planet (EP Central) — Time Tracking & Clockify Integration
-**Team Presentation & Technical Architecture Plan (Phase 1 & Phase 2)**
+# EP Central — Time Tracking (Clockify Replacement): Dev Spec
 
----
+Updated after the meeting with Daim (Nov 2026). This replaces the earlier two-phase plan that included a Clockify import wizard and a dashboard. Both are now out of scope.
 
-## Executive Overview
+## 1. Decisions from the meeting
 
-As Enduring Planet transitions the Accounting and FP&A teams from standalone Clockify usage into **EP Central (TMS)**, our goal is to provide a seamless, zero-data-loss migration and a native time-tracking experience inside EP Central.
+| # | Decision | What it means for the build |
+|---|----------|-----------------------------|
+| 1 | No Clockify import | Daim backs up Clockify before the switch. The team starts fresh in EP Central. No import wizard, entity mapping or Clockify API client. |
+| 2 | No dashboard | Only Timesheet, Reports and Projects. |
+| 3a | Time on a task | Inside a task (Activity → Time), start a timer or add time manually, choosing a Project (required) and a Company (optional). |
+| 3b | Time without a task | A new **Timesheet** tab with a timer or manual entry. **Project is required; company is optional.** Time with no company goes to the default company **EP (Internal)**. |
+| 4 | Export | PDF (EP branded) and Excel only. No CSV. |
+| 5 | No timestamps in reports | Reports and exports show date and duration only, with no start or end times. Entries still record start and end. |
+| 6 | Approval before reports | A report can't be exported until every entry in it is approved. |
+| 7 | Batch onboarding | Current TMS users move over first, then the rest of the team in batches. |
 
-- **Interactive Prototype Demo**: `index.html`
-- **Rollout Strategy**: Divided into two clear engineering phases:
-  - **Phase 1 — Clockify API Import, Entity Mapping & Task-Level Multi-Project Time Tracking (Backend + Core Task UI)**
-  - **Phase 2 — Clockify Executive Dashboard, Reports (Summary, Detailed, Weekly) & Branded Exports (PDF / CSV / Excel)**
+## 2. Domain model
 
----
+- **Company**: the portfolio client (Cambium, Moby Filters…). A seeded default company, `EP (Internal)`, holds internal work.
+- **Project**: a service workstream (B&A Retainer Services, Monthly Close…). Each Project belongs to one **Product** (Accounting or FP&A; internal projects use `Internal`) and is assigned to **many** Companies (many-to-many).
+- **Time entry**: one person, one Project (required), an optional Company (defaults to EP (Internal)), an optional Task, a date, start and end times, a duration, a description and an approval status.
 
-## Phase 1: Clockify Import, Entity Mapping & Task Time Tracking
+### Backend changes
 
-### 1.1 Business & Workflow Requirements (Phase 1)
+`backend/tasks/models/task_relations.py`, `TimeLog`:
+- `task`: make nullable (`null=True, blank=True`) so that Timesheet entries have no task.
+- `project = ForeignKey('tasks.Project', on_delete=PROTECT, related_name='time_logs')`: required on every entry.
+- `company = ForeignKey('company.Company', null=True, on_delete=SET_NULL, related_name='time_logs')`. If no company is given, set the default `EP (Internal)` company on save.
+- `duration_seconds = PositiveIntegerField(default=0)`, to store `HH:MM:SS` precision.
+- Approval fields:
+  - `status = CharField(choices=pending/approved/rejected, default='pending', db_index=True)`
+  - `approved_by = ForeignKey(User, null=True)`, `approved_at = DateTimeField(null=True)`
+  - `rejected_by`, `rejection_reason = TextField(blank=True)`
+- `updated_at = DateTimeField(auto_now=True)`
 
-1. **Multi-Project Time Tracking Inside EP Central Tasks**:
-   - In EP Central, tasks are often general recurring trackers (e.g., `EPA-1881: Moby Filter - Task Tracker - October 2026`).
-   - A team member working on that task may log hours across **multiple different projects** (e.g., *Monthly Close*, *Understanding system/Correcting EP mistake*, *Ad-hoc Financial Advisory*).
-   - Inside the **EP Central Task Modal (`Activity > Time` tab)**, users can:
-     - Select the **Project** from a dropdown before starting the **Live Timer** or logging **Start / End** times manually.
-     - View all logged time entries on the task and click **Edit** to update the Project, Date, Duration, or Note at any time.
+`backend/tasks/models/project.py`, `Project`:
+- Add `companies = ManyToManyField('company.Company', related_name='assigned_projects', blank=True)`.
+- Note: `Project` has no `clockify_id` field today. Since there's no import, none is needed.
 
-2. **Domain Relationships & Inverted Clockify Naming Convention (`Company` <-> `Project` -> `Product`)**:
-   - **Important Clockify Workspace Discovery**: In our team's Clockify workspace, the `Client` and `Project` fields are used in an inverted hierarchy:
-     - **Clockify `Project` = EP Central `Company`** (e.g., *Alchemy CO2*, *Compost Colorado*, *Emrgy*, *Erg Bio*, *Cambium*, *Dollaride*, *Bedrock Energy*, *Moby Filters*).
-     - **Clockify `Client` = EP Central `Project` (Service Workstream)** (e.g., *B&A Retainer Services*, *FP&A Retainer Services*, *AP Management*, *Cash Budget*, *Fund Model FP&A*, *Investment Operations*, *Accounting Audit*, *Understanding system/Correcting EP mistake*).
-   - **EP Project -> EP Product (Many-to-One)**: Every EP Project (imported from a Clockify `Client`) belongs to a specific EP Product line (`Accounting` or `FP&A`).
-   - **EP Company <-> EP Project (Many-to-Many)**: A single EP Company (imported from a Clockify `Project`) can have multiple EP Projects, and standard EP Projects (such as *B&A Retainer Services*, *FP&A Retainer Services*, *AP Management*, or *Cash Budget*) are shared across multiple EP Companies.
-   - **Auto-Match / Auto-Create on Import**: During Clockify import, Clockify `Project` names automatically match to existing EP Companies (case-insensitive) or create a new EP Company if unmatched, while Clockify `Client` names map to EP Projects linked to `Accounting` or `FP&A`.
+Seed data: the `EP (Internal)` company and the internal projects `General / Internal` and `Training & Team Meetings`.
 
-3. **Jira-Style 4-Screen Clockify Import Wizard (`Settings > Clockify Integration`)**:
-   - **No UI API Key Input**: The Clockify API key is stored securely in backend environment variables (`settings.CLOCKIFY_API_KEY`), never exposed in the UI.
-   - **Step 1 — Select Workspace & Batch Scope**:
-     - Select Clockify Workspace (`Enduring Planet — Accounting & FP&A`).
-     - Select **Time Range**: `This Month`, `This Week`, `All Time`, or `Custom Date Range`.
-     - Select **Onboarding Batch Scope**: Because users, companies, and projects are onboarded to TMS in batches, admins can choose:
-       - *Import All Tasks & Time Entries*
-       - *Import for Certain Company (Clockify Project)*
-       - *Import for Certain User (Team Member)*
-       - *Import for Certain Project / Workstream (Clockify Client)*
-   - **Step 2 — Map Fields (Separate Screen)**:
-     - Review & override auto-matched **Users** (by email), **Clockify Projects -> EP Companies**, and **Clockify Clients -> EP Projects & Products (`Accounting` / `FP&A`)**.
-   - **Step 3 — Preview & Confirm (Separate Screen)**:
-     - Filterable preview table with row-level checkboxes to include/exclude specific time entries before committing.
-   - **Step 4 — Import Complete**:
-     - Summary of imported entries, matched companies, mapped projects, and audit log confirmation.
+Removed from the earlier plan: `clockify_entry_id`, `external_user_email`/`external_user_name`, `ClockifyImportJob` and the Clockify API client. These only existed for the import.
 
----
+## 3. Approval rules
 
-### 1.2 Current Backend Gaps & Required Backend Changes (Phase 1)
+- Any user who is **Lead or above** and sits **above the person in the reporting line** (direct or indirect manager) can approve or reject that person's entries.
+- Nobody approves their own time. A Lead's time is approved by the person above them.
+- Time logged by the top of the hierarchy, who has no manager, is **auto-approved** *(assumption: confirm with Daim)*.
+- **Reject** needs a reason. The owner sees the reason, edits the entry, and the entry goes back to `pending`.
+- **Editing an approved entry** sends it back to `pending`; the UI warns before saving. Approved entries show a lock icon.
+- **Report gate**: the export is locked if any entry in the filtered report is `pending` or `rejected`. The banner shows:
+  - the number of unapproved entries and their total hours;
+  - which approvers are holding things up;
+  - a **Bulk approve** button for anything the viewer can approve.
+- **Bulk approve** groups the pending entries the viewer can approve by **person + company + project**. The lead ticks groups and approves them in one go. It's available from Reports (scoped to the current filters) and from Timesheet → Team approvals (scoped to the selected week).
 
-An audit of the current Django backend (`backend/tasks/`) highlights four required backend changes for Phase 1:
+The hierarchy needs a `manager` (reports-to) link on the user or profile, plus a role rank (Analyst < Lead < Manager). Check whether TMS already stores this. If it doesn't, it's a new field.
 
-#### 1. Upgrade `TimeLog` Model (`backend/tasks/models/task_relations.py`)
-- **Current State**: `TimeLog` only has `task`, `user`, `duration_minutes`, `description`, `logged_at`, `started_at`, and `ended_at`. It has no `project` field, assuming each `Task` only has one project.
-- **Required Changes**:
-  - Add `project = models.ForeignKey('tasks.Project', on_delete=models.SET_NULL, null=True, blank=True, related_name='time_logs')` so each time log entry records which specific Project was worked on.
-  - Add `company = models.ForeignKey('company.Company', on_delete=models.SET_NULL, null=True, blank=True, related_name='time_logs')` and allow `task` to be nullable (or auto-linked to the company's active monthly tracker task).
-  - Add `duration_seconds = models.PositiveIntegerField(default=0)` to preserve exact Clockify `HH:MM:SS` precision.
-  - Add `clockify_entry_id = models.CharField(max_length=64, unique=True, null=True, blank=True, db_index=True)` for idempotent deduplication across repeated batch imports.
-  - Add `is_billable = models.BooleanField(default=True)` and `updated_at = models.DateTimeField(auto_now=True)`.
+## 4. Screens (see the prototype)
 
-#### 2. Add Many-to-Many `companies` on `Project` (`backend/tasks/models/project.py`)
-- **Current State**: `Project` already has `product = ForeignKey('tasks.Product')`, but only has a single `company = ForeignKey('company.Company')`.
-- **Required Changes**:
-  - Add `companies = models.ManyToManyField('company.Company', related_name='assigned_projects', blank=True)` on `Project` so standard projects (linked to `Accounting` or `FP&A` Products) can be assigned across multiple Companies, and each Company can have multiple Projects.
+### Timesheet (`Time Tracking → Timesheet`)
+- Clockify-style entry bar with "What are you working on?", a project picker, and a Timer or Manual mode toggle. Manual mode takes a date and start and end times; an end time before the start time counts as overnight.
+- Entries are listed by day with a status pill, start–end times, duration, and edit and delete buttons for the owner. Approved entries can't be deleted.
+- **Team approvals** (Lead and above only): pending, rejected and approved entries from people below you, with **Approve** and **Reject** on each entry, plus **Approve all pending**.
 
-#### 3. Invert `Client`/`Project` Mapping & Fix Task Skipping in `backend/tasks/services/clockify_import.py`
-- **Current State**:
-  - `clockify_import.py` currently maps Clockify `Client` -> EP `Company` and Clockify `Project` -> EP `Project`. However, in our actual Clockify workspace, **Clockify `Project` is the Company** (e.g., *Alchemy CO2*, *Compost Colorado*, *Emrgy*, *Erg Bio*, *Cambium*) and **Clockify `Client` is the Project / Service Workstream** (e.g., *B&A Retainer Services*, *FP&A Retainer Services*, *AP Management*, *Cash Budget*).
-  - Additionally, in `clockify_import.py` (lines 308–313), if a Clockify entry does not have an explicit `task` column value, the import skips the row (`no task resolved`).
-- **Required Changes**:
-  - Invert the entity resolver in `clockify_import.py` so **Clockify `Project` -> EP `Company`** and **Clockify `Client` -> EP `Project` (linked to `Product`: `Accounting` or `FP&A`)**.
-  - If no explicit task name is present on the Clockify entry, either match the company's active monthly tracker task for that month/product or attach the `TimeLog` directly to `(company, project)` so zero valid Clockify entries are skipped.
+### Task time (`Task → Activity → Time`)
+- The same grouped project picker, defaulting to the task's company.
+- A timer, or manual start and end times.
+- The entries table shows who logged each entry and its status. Owners can edit; approvers can approve.
 
-#### 4. Direct Clockify REST API Client & Multi-Step `ClockifyImportJob`
-- **Current State**: `ClockifyImportJob` (`backend/tasks/models/clockify_import.py`) only handles static CSV uploads.
-- **Required Changes**:
-  - Add `backend/tasks/clockify/client.py` authenticating via `settings.CLOCKIFY_API_KEY` from `.env`.
-  - Update `ClockifyImportJob` states to `FETCHING -> MAPPING -> READY -> PROCESSING -> COMPLETED` (matching `JiraImportJob`), storing `workspace_id`, `time_range`, `scope_mode` (`all`, `client`, `user`, `project`), and `field_mappings`.
+### Grouped project picker (used everywhere)
+It mirrors Clockify's project filter:
+- **Project headers** (the workstreams), with **one Company row under each Project it's assigned to**.
+- Searching a company name lists it once under every project it belongs to; searching a project name lists all of that project's companies.
+- Terminology follows the Clockify mapping: **Clockify Client → EP Project**, **Clockify Project → EP Company**.
+- Single-select in the entry forms. **Project is required**: Start, Add, Log and Save are blocked until one is picked. **Company is optional**: clicking the project header ("· no company") saves the entry against **EP (Internal)**. Multi-select with checkboxes in the report filter.
 
----
+### Reports (`Time Tracking → Reports`)
+- **Filters**: date range, user, company, project (grouped picker), product, description keyword.
+- **Summary**: total, a daily bar chart, a breakdown grouped by Project, Company, User or Product (with a sub-grouping), and a donut chart.
+- **Detailed**: description, Company · Project, task key, user, **date**, approval status, duration. **No start or end times.**
+- **Weekly**: Company · Project (or User) × day matrix with totals. A month range shows one column per week.
+- **EXPORT** button with *Save as PDF (EP branded)* and *Save as Excel*, both for the active tab and locked until everything is approved.
 
-### 1.3 Phase 1 API Endpoints Summary
+### Projects (`Time Tracking → Projects`)
+The directory of projects, their product, assigned companies, logged time and the share of time approved.
 
-| Method | Endpoint | Purpose |
-| :--- | :--- | :--- |
-| `GET` | `/api/tasks/clockify/workspaces/` | Fetch Clockify workspaces, clients, users, and projects using server `CLOCKIFY_API_KEY` |
-| `POST` | `/api/tasks/clockify/import/fetch/` | **Step 1 -> Step 2**: Fetch Clockify entries for selected Time Range & Batch Scope and return entity resolution map |
-| `POST` | `/api/tasks/clockify/import/<job_id>/map/` | **Step 2 -> Step 3**: Save confirmed User, Company, and Project -> Product mappings; return preview rows |
-| `POST` | `/api/tasks/clockify/import/<job_id>/execute/` | **Step 3 -> Step 4**: Bulk-import selected `TimeLog` entries idempotently (`clockify_entry_id`) |
-| `POST` | `/api/tasks/<task_id>/time-logs/` | Log time (manual or live timer stop) on a Task with a selected `project_id` |
-| `PATCH` | `/api/tasks/<task_id>/time-logs/<log_id>/` | **Edit** an existing logged time entry (`project_id`, `started_at`, `ended_at`, `duration_seconds`, `description`) |
-| `GET` | `/api/tasks/projects/?company_id=<id>` | List Projects available for a given Company (including cross-company M2M Projects) |
+## 5. Export formats
 
----
+The column layouts follow Clockify's standard exports, with start and end times removed:
 
-## Phase 2: Executive Dashboard, Reports & Branded Exports
+| Report | Excel sheets and columns | PDF |
+|--------|--------------------------|-----|
+| Summary | **Summary**: Project, Company, Product, Entries, Time (h), Time (decimal), Total row. **By day**: Date, Time (h), Time (decimal) | Branded header, daily bar chart, grouped table with duration, decimal hours and share |
+| Detailed | **Detailed**: Date, Company, Project, Product, Task, Description, User, Duration (h), Duration (decimal), Approved by | Branded table: Date, Company · Project, Description, Team member, Duration |
+| Weekly | **Weekly**: Company, Project (or User), one column per day, Total (h), Total (decimal), Total row | Branded matrix |
 
-Once Phase 1 is live and all historical + new time entries are stored in `TimeLog` with accurate `Company`, `Project`, and `Product` (`Accounting` vs. `FP&A`) links, Phase 2 delivers the reporting and export suite inside EP Central.
+Every file starts with a header block: report type, date range, filters, and total approved time. File names follow `EP_Time_Report_<Type>_<MM_DD_YYYY-MM_DD_YYYY>.xlsx`.
 
-### 2.1 Business & Workflow Requirements (Phase 2)
+## 6. API endpoints
 
-1. **Clockify Section in EP Central Sidebar**:
-   - **Dashboard**: Executive KPIs (Total Hours, Accounting Hours, FP&A Hours, Active Clients).
-   - **Reports**: Summary, Detailed, Weekly, and Enduring Planet Branded PDF Preview.
-   - **Projects**: Directory of Projects, linked Products, and assigned Companies.
+- `GET /api/tasks/projects/?company_id=<id>`: projects with their assigned companies, for the picker.
+- `GET/POST /api/tasks/time-logs/`: Timesheet entries (filters: `user`, `from`, `to`, `status`; `task` optional).
+- `POST /api/tasks/<task_id>/time-logs/`, `PATCH /api/tasks/time-logs/<id>/`: editing an approved entry resets it to pending.
+- `POST /api/tasks/time-logs/<id>/approve/`, `POST /api/tasks/time-logs/<id>/reject/` (`{reason}`)
+- `POST /api/tasks/time-logs/bulk-approve/`: `{ids: [...]}` or `{user_id, company_id, project_id, from, to}`. The server only approves entries the caller is allowed to approve.
+- `GET /api/tasks/time-reports/{summary|detailed|weekly}/`
+- `GET /api/tasks/time-reports/export/?type=summary|detailed|weekly&format=pdf|xlsx`: returns **409** with the list of unapproved entries if anything in scope isn't approved.
 
-2. **Multi-Filter Bar Across All Reports**:
-   - Filter simultaneously by **Date Range**, **User**, **Client (EP Company)**, **Project**, **Product** (`Accounting`, `FP&A`), and **Keyword**.
+All permission checks (who can approve, the export gate) must run on the server; the UI only mirrors them.
 
-3. **Three Core Report Views + Branded Export Engine**:
-   - **Summary Report**: Daily bar chart, project donut chart, and grouped `Company — Project` breakdown.
-   - **Detailed Report**: Line-by-line audit log (`Description`, `Client • Project`, `Billable ($)`, `User`, `Date & Time Range`, `Duration`).
-   - **Weekly Report**: 7-day matrix (`Mon` – `Sun` + `Total`) grouped by Project/User.
-   - **Export Dropdown (`EXPORT ▾`)**: Exports strictly respect active filters (`Save as PDF (EP Branded)`, `Save as CSV`, `Save as Excel`).
+## 7. Edge cases still relevant
 
-### 2.2 Backend Aggregation & Export Endpoints (Phase 2)
+1. **Overnight entries**: store timezone-aware `started_at`/`ended_at`; daily and weekly grouping uses the workspace timezone (`TruncDate(..., tzinfo=...)`).
+2. **Running timers**: an entry with no end time is still in progress. Leave it out of reports and approvals until it's stopped.
+3. **Hierarchy changes**: when someone's manager changes, their pending entries move to the new approver automatically, because approval rights are checked at action time, not stored per entry.
+4. **Deleted or deactivated users**: their approved time stays in reports; their pending entries need an admin path to approve or reject.
 
-| Method | Endpoint | Purpose |
-| :--- | :--- | :--- |
-| `GET` | `/api/tasks/time-reports/summary/` | Returns total hours, `Accounting` vs. `FP&A` split, daily bar-chart buckets, and grouped `(company, project, product)` totals |
-| `GET` | `/api/tasks/time-reports/detailed/` | Paginated list of `TimeLog` records filtered by `start_date`, `end_date`, `user_id`, `company_id`, `project_id`, `product_id`, and `search` |
-| `GET` | `/api/tasks/time-reports/weekly/` | Returns 7-day (`Mon`–`Sun`) aggregated matrix per Project/User for the selected week |
-| `GET` | `/api/tasks/time-reports/export/` | Generates downloadable **CSV**, **Excel (`.xlsx`)**, or **EP-Branded PDF** using the active filter parameters |
+## 8. Open questions
 
----
-
-## 3. Backend Edge Cases, Loopholes & Engineering Safeguards (Dev Checklist)
-
-An audit of the live Clockify workspace data and the existing Django importer (`backend/tasks/services/clockify_import.py`) identified **7 critical edge cases** that the backend implementation must handle:
-
-### Edge Case 1: Mixed / Inverted `Client` vs. `Project` Naming Inside Clockify
-- **The Problem**: In most of the Clockify workspace, `Project` is the Portfolio Company (e.g., `Alchemy CO2`, `Emrgy`, `Erg Bio`) and `Client` is the Service Workstream (e.g., `B&A Retainer Services`, `AP Management`, `Cash Budget`). However, some historical entries have the Company under `Client` (e.g., `Cambium`, `Cambium Carbon PBC`) and the workstream under `Project` (`Understanding system/Correcting EP mistake`), or combine both with a colon (`Portmanteau: Underwriting Framework`).
-- **Backend Solution**:
-  - In `resolve_entities()` (Step 1 -> Step 2), match both Clockify `client_name` and `project_name` against `Company.objects` and `Project.objects` (case-insensitive + alias table).
-  - In `ClockifyImportJob.field_mappings` (Step 2), allow per-row/per-pair role assignment (`company_source: 'project' | 'client'`) so the Admin can flip any inverted historical entry before execution.
-
-### Edge Case 2: Duplicate / Variant Company Names (`Cambium` vs. `Cambium Carbon PBC`)
-- **The Problem**: `clockify_import.py` (line 185) currently uses `Company.objects.get(name__iexact=name)` and auto-creates a new `Company` when an exact string match fails. Because Clockify contains variants like `Cambium` and `Cambium Carbon PBC` (or `Moby Filter` vs. `Moby Filters Inc`), blind auto-creation will create duplicate companies in `company_company`.
-- **Backend Solution**:
-  - Never auto-create a `Company` during `execute_import()` unless the Admin explicitly selects `"Create New Company"` in Step 2 (`field_mappings['companies'][clockify_name] = {'action': 'map', 'company_id': existing_id}`).
-  - Support many-to-one alias mapping so multiple Clockify strings (`"Cambium"`, `"Cambium Carbon PBC"`) resolve to the same `company_id`.
-
-### Edge Case 3: Entries with `(Without client)` / `NO CLIENT` (`335:52:05` hrs) & Internal EP Work (`235:17:48` hrs)
-- **The Problem**: Over 168 entries (`335:52:05` hours) in Clockify have `client = null` (`(Without client)`), and `235:17:48` hours are logged under `Enduring Planet - Accounting` (internal company work).
-- **Backend Solution**:
-  - Allow `TimeLog.project` to fall back to a default `Uncategorized / General` `Project` (under `Accounting` or `FP&A`) when Clockify's workstream is null.
-  - Seed or map an `Enduring Planet (Internal)` `Company` record so internal accounting/FP&A hours are preserved and reportable without polluting external client metrics.
-
-### Edge Case 4: Batch Onboarding — Preserving Hours of Users Not Yet in TMS
-- **The Problem**: `clockify_import.py` (lines 298–301) currently skips any row where the Clockify user's email is not found in `users_user` (`if not user_info['found']: rows_skipped += 1; continue`). Because users are onboarded to TMS in batches, importing all hours for a Company will drop hours logged by analysts who haven't been onboarded yet or former contractors—causing EP Central's company totals to be lower than Clockify's.
-- **Backend Solution**:
-  - Make `TimeLog.user` nullable (`null=True, blank=True`) and add `external_user_email = models.EmailField(blank=True, default='', db_index=True)` and `external_user_name = models.CharField(max_length=150, blank=True, default='')` on `TimeLog`.
-  - Add a `post_save` signal on `User` creation that backfills `TimeLog.objects.filter(user__isnull=True, external_user_email__iexact=instance.email).update(user=instance)`.
-
-### Edge Case 5: Active / Running Timers at the Moment of Import
-- **The Problem**: When fetching entries via the Clockify REST API (`GET /v1/workspaces/{workspaceId}/user/{userId}/time-entries`), any timer currently running has `timeInterval.end = null` and `timeInterval.duration = null`, which causes duration parsing to fail.
-- **Backend Solution**:
-  - Filter out in-progress entries (`if not entry.get('timeInterval', {}).get('end'): continue`) during `fetch_clockify_entries()`.
-
-### Edge Case 6: Idempotent Re-Imports & Updating Corrected Clockify Entries
-- **The Problem**: During transition, an accountant may fix a typo in Clockify (e.g., changing `02:00:00` to `03:30:00`) and the Admin may re-run the import for that date range.
-- **Backend Solution**:
-  - Store `clockify_entry_id = models.CharField(max_length=64, unique=True, null=True, blank=True, db_index=True)` on `TimeLog`.
-  - Use `TimeLog.objects.update_or_create(clockify_entry_id=entry_id, defaults={...})` during `execute_import()` so re-imports are 100% idempotent and automatically update durations/notes if modified in Clockify.
-
-### Edge Case 7: Timezone & Overnight (`+1`) Shift Boundaries (PKT `UTC+5` vs. US Timezones)
-- **The Problem**: Many shifts are overnight (`9:00PM - 3:00AM +1`). If `started_at` is stored or queried in naive UTC instead of the workspace timezone, an entry logged at `9:00 PM PKT` (`4:00 PM UTC`) vs. `3:00 AM PKT` (`10:00 PM UTC previous day`) can land on a different date bucket in the Summary and Weekly charts.
-- **Backend Solution**:
-  - Store timezone-aware `started_at` and `ended_at` (`DateTimeField`) on `TimeLog`, and group daily/weekly report aggregations using `TruncDate('started_at', tzinfo= ZoneInfo(settings.CLOCKIFY_WORKSPACE_TIMEZONE))`.
-
----
-
-## 4. Task-Mapping Implementation Options (Pending Product Sign-Off)
-
-In `backend/tasks/services/clockify_import.py` (lines 308–313), `TimeLog` currently requires a `task_id`. Once the Accounting team confirms their preferred option in the Demo Guide, implement one of the following in `execute_import()`:
-
-1. **Option 1 (Attach to Monthly Tracker Task)**: Resolve `(company, month, product)` -> attach `TimeLog` to the company's active monthly recurring tracker `Task` (e.g., `Cambium - Task Tracker - October 2026`), setting `TimeLog.project = resolved_project` and `TimeLog.description = clockify_description`.
-2. **Option 2 (Task per Description)**: `Task.objects.get_or_create(company=company, project=project, title__iexact=clockify_description)` and attach `TimeLog` to that task.
-3. **Option 3 (Nullable `TimeLog.task`)**: Set `TimeLog.task = None`, `TimeLog.company = company`, `TimeLog.project = project` for historical Clockify imports, while requiring `task` only for time logged directly inside the EP Central Task Drawer.
-
-
-
+1. Is the top of the hierarchy auto-approved, or does someone else (an admin) approve that time?
+2. Should approval also be possible by **week per person**, or is the entry and person · company · project grouping enough?
+3. Can approved entries be edited at all, or should they be fully locked so that only an approver can unlock them?
