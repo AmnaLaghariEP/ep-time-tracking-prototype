@@ -368,12 +368,12 @@
             <span class="font-bold text-slate-400 uppercase tracking-wider text-[11px] pr-2 border-r border-slate-200">FILTER</span>
             <div class="flex items-center space-x-1">
               <span class="text-slate-500">User:</span>
-              <select id="filter-user" onchange="applyReportFilters()" class="font-semibold text-slate-800 bg-transparent focus:outline-none cursor-pointer"></select>
+              <select id="filter-user" onchange="applyReportFilters()" class="hidden"></select><div id="filter-user-dd"></div>
             </div>
             <span class="text-slate-200">|</span>
             <div class="flex items-center space-x-1">
               <span class="text-slate-500">Company:</span>
-              <select id="filter-company" onchange="applyReportFilters()" class="font-semibold text-slate-800 bg-transparent focus:outline-none cursor-pointer"></select>
+              <select id="filter-company" onchange="applyReportFilters()" class="hidden"></select><div id="filter-company-dd"></div>
             </div>
             <span class="text-slate-200">|</span>
             <div class="flex items-center space-x-1">
@@ -383,12 +383,12 @@
             <span class="text-slate-200">|</span>
             <div class="flex items-center space-x-1">
               <span class="text-slate-500">Product:</span>
-              <select id="filter-product" onchange="applyReportFilters()" class="font-semibold text-slate-800 bg-transparent focus:outline-none cursor-pointer">
-                <option value="ALL" selected>All</option>
+              <select id="filter-product" onchange="applyReportFilters()" class="hidden">
+                <option value="ALL" selected>All products</option>
                 <option value="Accounting">Accounting</option>
                 <option value="FP&A">FP&amp;A</option>
                 <option value="Internal">Internal (EP)</option>
-              </select>
+              </select><div id="filter-product-dd"></div>
             </div>
             <span class="text-slate-200">|</span>
             <input type="text" id="filter-search" oninput="applyReportFilters()" placeholder="Description keyword..." class="text-xs border-b border-transparent focus:border-slate-400 focus:outline-none px-1 py-0.5 placeholder-slate-400 text-slate-800 w-36">
@@ -1703,6 +1703,61 @@
       }
     }
     function closeAllPickers() { document.querySelectorAll('.picker-panel').forEach(p => p.classList.add('hidden')); }
+
+    // White searchable dropdown (same look as the project picker) backed by a hidden <select>.
+    const ddQuery = {};
+    function initSelectDropdown(selectId, searchPlaceholder) {
+      const host = document.getElementById(selectId + '-dd');
+      host.classList.add('relative');
+      ddQuery[selectId] = '';
+      host.innerHTML = `
+        <button type="button" onclick="toggleSelectDropdown('${selectId}', event)" class="flex items-center gap-1.5 font-semibold text-sky-700 bg-sky-50 px-2 py-0.5 rounded">
+          <span id="${selectId}-dd-label" class="truncate max-w-[180px]"></span>
+          <svg class="w-3 h-3 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+        </button>
+        <div id="${selectId}-dd-panel" onclick="event.stopPropagation()" class="picker-panel hidden absolute left-0 z-50 mt-1 w-64 bg-white border border-slate-200 rounded-md shadow-xl">
+          <div class="p-2 border-b border-slate-100">
+            <input id="${selectId}-dd-search" oninput="ddQuery['${selectId}'] = this.value; renderSelectDropdown('${selectId}')" placeholder="${searchPlaceholder}" class="w-full border border-slate-300 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:border-sky-500">
+          </div>
+          <div id="${selectId}-dd-list" class="max-h-72 overflow-y-auto py-1 text-xs"></div>
+        </div>`;
+      renderSelectDropdown(selectId);
+    }
+    function renderSelectDropdown(selectId) {
+      const sel = document.getElementById(selectId);
+      const opts = [...sel.options];
+      const cur = opts.find(o => o.value === sel.value) || opts[0];
+      const label = document.getElementById(selectId + '-dd-label');
+      label.textContent = cur ? cur.text : '';
+      const q = (ddQuery[selectId] || '').trim().toLowerCase();
+      const shown = opts.filter(o => o.value === 'ALL' || !q || o.text.toLowerCase().includes(q));
+      document.getElementById(selectId + '-dd-list').innerHTML = shown.map(o => {
+        const active = o.value === sel.value;
+        return `<div onclick="pickSelectDropdown('${selectId}', '${o.value}')" class="flex items-center justify-between px-3 py-1.5 cursor-pointer ${o.value === 'ALL' ? 'border-b border-slate-100 text-slate-500' : 'text-slate-700'} ${active ? 'bg-sky-50 font-semibold text-sky-700' : 'hover:bg-slate-50'}">
+          <span>${esc(o.text)}</span>${active ? '<svg class="w-3.5 h-3.5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>' : ''}</div>`;
+      }).join('') || `<div class="px-3 py-4 text-center text-slate-400">No matches</div>`;
+    }
+    function pickSelectDropdown(selectId, value) {
+      const sel = document.getElementById(selectId);
+      sel.value = value;
+      ddQuery[selectId] = '';
+      closeAllPickers();
+      renderSelectDropdown(selectId);
+      sel.dispatchEvent(new Event('change'));
+    }
+    function toggleSelectDropdown(selectId, ev) {
+      ev.stopPropagation();
+      const panel = document.getElementById(selectId + '-dd-panel');
+      const wasHidden = panel.classList.contains('hidden');
+      closeAllPickers();
+      if (wasHidden) {
+        panel.classList.remove('hidden');
+        const s = document.getElementById(selectId + '-dd-search');
+        s.value = ddQuery[selectId] = '';
+        renderSelectDropdown(selectId);
+        s.focus();
+      }
+    }
     document.addEventListener('click', () => {
       closeAllPickers();
       document.getElementById('export-dropdown-menu')?.classList.add('hidden');
@@ -1877,6 +1932,9 @@
     function initReportFilters() {
       document.getElementById('filter-user').innerHTML = `<option value="ALL">All users</option>` + USERS.map(u => `<option value="${u.id}">${esc(u.name)}</option>`).join('');
       document.getElementById('filter-company').innerHTML = `<option value="ALL">All companies</option>` + COMPANIES.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+      initSelectDropdown('filter-user', 'Search user');
+      initSelectDropdown('filter-company', 'Search company');
+      initSelectDropdown('filter-product', 'Search product');
     }
 
     function currentRange() { return RANGES[document.getElementById('report-date-preset').value]; }
@@ -2107,6 +2165,7 @@
       document.getElementById('filter-user').value = 'ALL';
       document.getElementById('filter-company').value = 'ALL';
       document.getElementById('filter-product').value = 'ALL';
+      ['filter-user', 'filter-company', 'filter-product'].forEach(renderSelectDropdown);
       document.getElementById('filter-search').value = '';
       pickers['report-project-picker'].selected.clear();
       pickers['report-project-picker'].query = '';
